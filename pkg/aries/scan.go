@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math/rand"
 	"net"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -136,7 +135,7 @@ func NewScanner(options *Options) (*Scanner, error) {
 			FixLengths:       true,
 			ComputeChecksums: true,
 		},
-		timeout:       time.Duration(options.Timeout),
+		timeout:       time.Duration(options.Timeout) * time.Millisecond,
 		retries:       options.Retries,
 		rate:          options.RateLimit,
 		portThreshold: 3,
@@ -148,26 +147,6 @@ func NewScanner(options *Options) (*Scanner, error) {
 	scanner.Ports, _ = ParsePorts(options)
 
 	return scanner, nil
-}
-
-func (s *Scanner) ConnectScan() {
-	// hosts := []string{
-	// 	"192.168.66.22",
-	// 	"192.168.66.26",
-	// 	"192.168.66.27",
-	// 	"192.168.66.22",
-	// }
-	// for _, ip := range hosts {
-	for i := 1; i < 255; i++ {
-		ip := "192.168.66." + strconv.Itoa(i)
-		for _, port := range s.Ports {
-			open, err := s.ConnectPort(ip, port, time.Duration(10)*time.Millisecond)
-			if open && err == nil {
-				gologger.Info().Msgf("%s:%d", ip, port)
-				s.ScanResults.AddPort(ip, port)
-			}
-		}
-	}
 }
 
 // Close the scanner and terminate all workers
@@ -320,14 +299,7 @@ send:
 	if retries >= s.retries {
 		return false, err
 	}
-	// if s.proxyDialer != nil {
-	// 	conn, err = s.proxyDialer.Dial("tcp", hostport)
-	// 	if err != nil {
-	// 		return false, err
-	// 	}
-	// } else {
 	conn, err = net.DialTimeout("tcp", hostport, timeout)
-	// }
 	if err != nil {
 		retries++
 		// introduce a small delay to allow the network interface to flush the queue

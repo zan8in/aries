@@ -32,8 +32,8 @@ func ParseOptions() *Options {
 	flagSet.SetDescription(`Aries`)
 
 	flagSet.CreateGroup("input", "Input",
-		flagSet.StringSliceVarP(&options.Host, "h", "host", nil, "hosts to scan ports for (comma-separated)", goflags.NormalizedStringSliceOptions),
-		flagSet.StringVarP(&options.HostsFile, "hf", "host-file", "", "list of hosts to scan ports (file)"),
+		flagSet.StringSliceVarP(&options.Host, "t", "target", nil, "hosts to scan ports for (comma-separated)", goflags.NormalizedStringSliceOptions),
+		flagSet.StringVarP(&options.HostsFile, "T", "host-file", "", "list of hosts to scan ports (file)"),
 		flagSet.StringVarP(&options.ExcludeIps, "eh", "exclude-hosts", "", "hosts to exclude from the scan (comma-separated)"),
 		flagSet.StringVarP(&options.ExcludeIpsFile, "ef", "exclude-file", "", "list of hosts to exclude from scan (file)"),
 	)
