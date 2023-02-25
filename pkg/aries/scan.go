@@ -138,7 +138,7 @@ func NewScanner(options *Options) (*Scanner, error) {
 		},
 		timeout:       time.Duration(options.Timeout),
 		retries:       options.Retries,
-		rate:          options.Rate,
+		rate:          options.RateLimit,
 		portThreshold: 3,
 		tcpsequencer:  NewTCPSequencer(),
 	}
@@ -314,6 +314,12 @@ func (s *Scanner) ConnectPort(host string, port int, timeout time.Duration) (boo
 		err  error
 		conn net.Conn
 	)
+
+	retries := 0
+send:
+	if retries >= s.retries {
+		return false, err
+	}
 	// if s.proxyDialer != nil {
 	// 	conn, err = s.proxyDialer.Dial("tcp", hostport)
 	// 	if err != nil {
@@ -323,7 +329,10 @@ func (s *Scanner) ConnectPort(host string, port int, timeout time.Duration) (boo
 	conn, err = net.DialTimeout("tcp", hostport, timeout)
 	// }
 	if err != nil {
-		return false, err
+		retries++
+		// introduce a small delay to allow the network interface to flush the queue
+		time.Sleep(time.Duration(DeadlineSec) * time.Millisecond)
+		goto send
 	}
 	conn.Close()
 	return true, err

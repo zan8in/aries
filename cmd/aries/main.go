@@ -1,8 +1,6 @@
 package main
 
 import (
-	"time"
-
 	"github.com/zan8in/aries/pkg/aries"
 	"github.com/zan8in/gologger"
 )
@@ -11,14 +9,21 @@ func main() {
 
 	options := aries.ParseOptions()
 
-	_, err := aries.NewRunner(options)
+	runner, err := aries.NewRunner(options)
 	if err != nil {
 		gologger.Fatal().Msg(err.Error())
 	}
 
+	err = runner.Run()
+	if err != nil {
+		gologger.Fatal().Msg(err.Error())
+	}
+
+	runner.Listener()
+
 	// runner.ScanHost()
 
-	time.Sleep(10 * time.Second)
+	// time.Sleep(10 * time.Second)
 
 	// scanner, err := aries.NewScanner(options)
 	// if err != nil {

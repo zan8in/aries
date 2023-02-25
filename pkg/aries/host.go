@@ -15,7 +15,7 @@ import (
 
 var tempfile = "aries-temp-hosts-*"
 
-func (runner *Runner) ParseHosts() error {
+func (runner *Runner) PreprocessingHosts() error {
 	var err error
 
 	tempHosts, err := os.CreateTemp("", tempfile)
@@ -26,7 +26,6 @@ func (runner *Runner) ParseHosts() error {
 
 	if len(runner.options.Host) > 0 {
 		for _, v := range runner.options.Host {
-			fmt.Println(v)
 			fmt.Fprintf(tempHosts, "%s\n", v)
 		}
 	}
@@ -43,12 +42,12 @@ func (runner *Runner) ParseHosts() error {
 		}
 	}
 
-	runner.TempHostFile = tempHosts.Name()
+	runner.tempHostFile = tempHosts.Name()
 
 	defer close(runner.hostChan)
 
-	wg := sizedwaitgroup.New(25)
-	f, err := os.Open(runner.TempHostFile)
+	wg := sizedwaitgroup.New(runner.options.Threads)
+	f, err := os.Open(runner.tempHostFile)
 	if err != nil {
 		return err
 	}
@@ -64,7 +63,6 @@ func (runner *Runner) ParseHosts() error {
 			}
 		}(s.Text())
 	}
-
 	wg.Wait()
 
 	return err
@@ -99,6 +97,7 @@ func (runner *Runner) addTarget(target string) error {
 	}
 	for _, ip := range ips {
 		runner.hostChan <- iputil.ToCidr(ip)
+		runner.scanner.ScanResults.AddHost(ip, target)
 	}
 
 	return err

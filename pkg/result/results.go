@@ -13,6 +13,7 @@ type HostResult struct {
 // Result of the scan
 type Result struct {
 	sync.RWMutex
+	ipHost  map[string]string
 	ipPorts map[string]map[int]struct{}
 	ips     map[string]struct{}
 	skipped map[string]struct{}
@@ -20,10 +21,11 @@ type Result struct {
 
 // NewResult structure
 func NewResult() *Result {
+	ipHost := make(map[string]string)
 	ipPorts := make(map[string]map[int]struct{})
 	ips := make(map[string]struct{})
 	skipped := make(map[string]struct{})
-	return &Result{ipPorts: ipPorts, ips: ips, skipped: skipped}
+	return &Result{ipHost: ipHost, ipPorts: ipPorts, ips: ips, skipped: skipped}
 }
 
 // AddPort to a specific ip
@@ -49,6 +51,12 @@ func (r *Result) HasIPS() bool {
 	defer r.RUnlock()
 
 	return len(r.ips) > 0
+}
+
+func (r *Result) GetHost(ip string) string {
+	r.RLock()
+	defer r.RUnlock()
+	return r.ipHost[ip]
 }
 
 // GetIpsPorts returns the ips and ports
@@ -77,6 +85,13 @@ func (r *Result) HasIPsPorts() bool {
 	defer r.RUnlock()
 
 	return len(r.ipPorts) > 0
+}
+
+func (r *Result) AddHost(ip, host string) {
+	r.Lock()
+	defer r.Unlock()
+
+	r.ipHost[ip] = host
 }
 
 // AddPort to a specific ip

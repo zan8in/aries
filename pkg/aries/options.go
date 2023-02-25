@@ -1,6 +1,7 @@
 package aries
 
 import (
+	"github.com/zan8in/aries/pkg/privilege"
 	"github.com/zan8in/goflags"
 	"github.com/zan8in/gologger"
 )
@@ -16,9 +17,11 @@ type Options struct {
 	TopPorts       string              // Tops ports to scan
 
 	Retries   int                 // Retries is the number of retries for the port
-	Rate      int                 // Rate is the rate of port scan requests
+	Threads   int                 // Internal worker threads
+	RateLimit int                 // RateLimit is the rate of port scan requests
 	Timeout   int                 // Timeout is the seconds to wait for ports to respond
 	IPVersion goflags.StringSlice // IP Version to use while resolving hostnames
+	ScanType  string              // Scan Type
 }
 
 func ParseOptions() *Options {
@@ -42,7 +45,13 @@ func ParseOptions() *Options {
 		flagSet.StringVarP(&options.PortsFile, "pf", "ports-file", "", "list of ports to scan (file)"),
 	)
 
+	flagSet.CreateGroup("rate-limit", "Rate-limit",
+		flagSet.IntVar(&options.Threads, "c", 25, "general internal worker threads"),
+		flagSet.IntVar(&options.RateLimit, "rate", DefaultRateSynScan, "packets to send per second"),
+	)
+
 	flagSet.CreateGroup("config", "Configuration",
+		flagSet.StringVarP(&options.ScanType, "s", "scan-type", SynScan, "type of port scan (SYN/CONNECT)"),
 		flagSet.StringSliceVarP(&options.IPVersion, "iv", "ip-version", nil, "ip version to scan of hostname (4,6) - (default 4)", goflags.NormalizedStringSliceOptions),
 	)
 
@@ -64,4 +73,8 @@ func ParseOptions() *Options {
 func (options *Options) validateOptions() (err error) {
 
 	return err
+}
+
+func (options *Options) isSynScan() bool {
+	return isOSSupported() && privilege.IsPrivileged && options.ScanType == SynScan
 }
