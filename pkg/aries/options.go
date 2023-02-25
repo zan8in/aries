@@ -1,7 +1,6 @@
 package aries
 
 import (
-	"github.com/zan8in/aries/pkg/privilege"
 	"github.com/zan8in/goflags"
 	"github.com/zan8in/gologger"
 )
@@ -76,5 +75,5 @@ func (options *Options) validateOptions() (err error) {
 }
 
 func (options *Options) isSynScan() bool {
-	return isOSSupported() && privilege.IsPrivileged && options.ScanType == SynScan
+	return isOSSupported() && options.ScanType == SynScan
 }

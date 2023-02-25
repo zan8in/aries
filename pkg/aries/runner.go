@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/remeh/sizedwaitgroup"
-	"github.com/zan8in/aries/pkg/privilege"
 	"github.com/zan8in/aries/pkg/util/mapcidr"
 	"github.com/zan8in/gologger"
 )
@@ -46,8 +45,8 @@ func (runner *Runner) Run() error {
 	var err error
 	defer runner.Close()
 
-	if privilege.IsPrivileged && runner.options.ScanType == SynScan {
-
+	if runner.options.isSynScan() {
+		fmt.Println("SYN")
 	}
 
 	go runner.PreprocessingHosts()
