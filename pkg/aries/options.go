@@ -75,5 +75,5 @@ func (options *Options) validateOptions() (err error) {
 }
 
 func (options *Options) isSynScan() bool {
-	return isOSSupported() && options.ScanType == SynScan
+	return isPrivileged() && options.ScanType == SynScan
 }

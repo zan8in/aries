@@ -1,6 +1,9 @@
 package aries
 
-import "runtime"
+import (
+	"os"
+	"runtime"
+)
 
 const (
 	DefaultPortTimeoutSynScan     = 1000
@@ -18,6 +21,10 @@ const (
 
 	DeadlineSec = 10
 )
+
+func isPrivileged() bool {
+	return os.Geteuid() == 0 && isOSSupported()
+}
 
 func isOSSupported() bool {
 	return isLinux() || isOSX()
