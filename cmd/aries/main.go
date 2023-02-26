@@ -19,11 +19,9 @@ func main() {
 		gologger.Fatal().Msg(err.Error())
 	}
 
-	runner.Listener()
+	// runner.Listener()
 
 	// runner.ScanHost()
-
-	// time.Sleep(10 * time.Second)
 
 	// scanner, err := aries.NewScanner(options)
 	// if err != nil {

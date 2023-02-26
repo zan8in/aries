@@ -7,7 +7,7 @@ import (
 
 const (
 	DefaultPortTimeoutSynScan     = 1000
-	DefaultPortTimeoutConnectScan = 5000
+	DefaultPortTimeoutConnectScan = 2000
 
 	DefaultRateSynScan     = 1000
 	DefaultRateConnectScan = 1500
@@ -18,8 +18,6 @@ const (
 	SynScan             = "s"
 	ConnectScan         = "c"
 	DefautStatsInterval = 5
-
-	DeadlineSec = 10
 )
 
 func isPrivileged() bool {

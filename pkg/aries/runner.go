@@ -8,17 +8,24 @@ import (
 	"time"
 
 	"github.com/remeh/sizedwaitgroup"
+	"github.com/zan8in/aries/pkg/port"
+	"github.com/zan8in/aries/pkg/privileges"
+	"github.com/zan8in/aries/pkg/scan"
+	"github.com/zan8in/aries/pkg/util/dateutil"
 	"github.com/zan8in/aries/pkg/util/mapcidr"
 	"github.com/zan8in/gologger"
 )
 
 type Runner struct {
-	options      *Options
-	scanner      *Scanner
-	tempHostFile string // os.CreateTemp() file name
-	hostChan     chan *net.IPNet
-	ticker       *time.Ticker
-	wgscan       sizedwaitgroup.SizedWaitGroup
+	options *Options
+	scanner *scan.Scanner
+
+	ticker *time.Ticker
+	wgscan sizedwaitgroup.SizedWaitGroup
+
+	hostChan chan *net.IPNet
+
+	tempHostFile string
 }
 
 func NewRunner(options *Options) (*Runner, error) {
@@ -27,7 +34,13 @@ func NewRunner(options *Options) (*Runner, error) {
 	}
 	runner.hostChan = make(chan *net.IPNet)
 
-	scanner, err := NewScanner(options)
+	scanner, err := scan.NewScanner(&scan.OptionsScanner{
+		Timeout: time.Duration(options.Timeout) * time.Millisecond,
+		Retries: options.Retries,
+		Rate:    options.RateLimit,
+		Debug:   options.Debug,
+		Stream:  true,
+	})
 	if err != nil {
 		return runner, err
 	}
@@ -38,32 +51,39 @@ func NewRunner(options *Options) (*Runner, error) {
 		return runner, err
 	}
 
+	runner.wgscan = sizedwaitgroup.New(runner.options.RateLimit)
+	runner.ticker = time.NewTicker(time.Second / time.Duration(runner.options.RateLimit))
+
 	return runner, err
 }
 
 func (runner *Runner) Run() error {
-	var err error
 	defer runner.Close()
 
-	if runner.options.isSynScan() {
-		fmt.Println("SYN")
+	if privileges.IsPrivileged && runner.options.ScanType == SynScan {
+		err := runner.scanner.SetupHandlers()
+		if err != nil {
+			return err
+		}
+		runner.BackgroundWorkers()
 	}
 
 	go runner.PreprocessingHosts()
 
 	runner.start()
 
-	return err
+	return nil
+}
+
+func (r *Runner) BackgroundWorkers() {
+	r.scanner.StartWorkers()
 }
 
 func (runner *Runner) start() {
 	rand.Seed(time.Now().UnixNano())
 
-	runner.wgscan = sizedwaitgroup.New(runner.options.RateLimit)
-	runner.ticker = time.NewTicker(time.Second / time.Duration(runner.options.RateLimit))
-
 	isSynScanType := runner.options.isSynScan()
-	fmt.Println("is SYN? ", isSynScanType)
+	gologger.Print().Msgf("Running [%s] scan. Start time %s\n", runner.options.scanType(), dateutil.GetNowFullDateTime())
 
 	for cidr := range runner.hostChan {
 		ipStream, _ := mapcidr.IPAddressesAsStream(cidr.String())
@@ -73,7 +93,8 @@ func (runner *Runner) start() {
 					continue
 				}
 				if isSynScanType {
-
+					runner.scanner.Phase.Set(scan.Scan)
+					runner.handleHostPortSyn(ip, port)
 				} else {
 					runner.wgscan.Add()
 					go runner.connectScan(ip, port)
@@ -83,14 +104,25 @@ func (runner *Runner) start() {
 		}
 	}
 	runner.wgscan.Wait()
+
+	runner.scanner.Phase.Set(scan.Done)
+
+	runner.handleOutput(runner.scanner.ScanResults)
+
+	gologger.Print().Msgf("\nAries finished at %s\n", dateutil.GetNowFullDateTime())
 }
 
 func (runner *Runner) Listener() {
 	fmt.Println("Listen end")
-	runner.output(runner.scanner.ScanResults)
+	runner.handleOutput(runner.scanner.ScanResults)
 }
 
-func (runner *Runner) connectScan(host string, port int) {
+func (r *Runner) handleHostPortSyn(ip string, p *port.Port) {
+	<-r.ticker.C
+	r.scanner.EnqueueTCP(ip, scan.Syn, p)
+}
+
+func (runner *Runner) connectScan(host string, port *port.Port) {
 	defer runner.wgscan.Done()
 
 	if runner.scanner.ScanResults.IPHasPort(host, port) {
@@ -101,7 +133,9 @@ func (runner *Runner) connectScan(host string, port int) {
 
 	open, err := runner.scanner.ConnectPort(host, port, time.Duration(runner.options.Timeout)*time.Millisecond)
 	if open && err == nil {
-		gologger.Print().Msgf("%s:%d", host, port)
+		if runner.options.Debug {
+			gologger.Print().Msgf("Received Transport (TCP) scan response from %s:%d\n", host, port.Port)
+		}
 		runner.scanner.ScanResults.AddPort(host, port)
 	}
 }

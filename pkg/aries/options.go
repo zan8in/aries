@@ -1,6 +1,11 @@
 package aries
 
 import (
+	"fmt"
+	"net"
+
+	"github.com/pkg/errors"
+	"github.com/zan8in/aries/pkg/privileges"
 	"github.com/zan8in/goflags"
 	"github.com/zan8in/gologger"
 )
@@ -21,6 +26,8 @@ type Options struct {
 	Timeout   int                 // Timeout is the seconds to wait for ports to respond
 	IPVersion goflags.StringSlice // IP Version to use while resolving hostnames
 	ScanType  string              // Scan Type
+	Debug     bool                // Prints out debug information
+	Interface string              // Interface to use for TCP packets
 }
 
 func ParseOptions() *Options {
@@ -52,11 +59,16 @@ func ParseOptions() *Options {
 	flagSet.CreateGroup("config", "Configuration",
 		flagSet.StringVarP(&options.ScanType, "s", "scan-type", SynScan, "type of port scan (SYN/CONNECT)"),
 		flagSet.StringSliceVarP(&options.IPVersion, "iv", "ip-version", nil, "ip version to scan of hostname (4,6) - (default 4)", goflags.NormalizedStringSliceOptions),
+		flagSet.StringVarP(&options.Interface, "i", "interface", "", "network Interface to use for port scan"),
 	)
 
 	flagSet.CreateGroup("optimization", "Optimization",
 		flagSet.IntVar(&options.Retries, "retries", DefaultRetriesSynScan, "number of retries for the port scan"),
 		flagSet.IntVar(&options.Timeout, "timeout", DefaultPortTimeoutSynScan, "millisecond to wait before timing out"),
+	)
+
+	flagSet.CreateGroup("debug", "Debug",
+		flagSet.BoolVar(&options.Debug, "debug", false, "display debugging information"),
 	)
 
 	_ = flagSet.Parse()
@@ -69,11 +81,51 @@ func ParseOptions() *Options {
 	return options
 }
 
+var (
+	errNoInputList   = errors.New("no input list provided")
+	errOutputMode    = errors.New("both verbose and silent mode specified")
+	errZeroValue     = errors.New("cannot be zero")
+	errTwoOutputMode = errors.New("both json and csv mode specified")
+)
+
 func (options *Options) validateOptions() (err error) {
+
+	if options.Host == nil && options.HostsFile == "" {
+		return errNoInputList
+	}
+
+	if options.Timeout == 0 {
+		return errors.Wrap(errZeroValue, "timeout")
+	} else if !privileges.IsPrivileged && options.Timeout == DefaultPortTimeoutSynScan {
+		options.Timeout = DefaultPortTimeoutConnectScan
+	}
+
+	if options.RateLimit == 0 {
+		return errors.Wrap(errZeroValue, "rate")
+	} else if !privileges.IsPrivileged && options.RateLimit == DefaultRateSynScan {
+		options.RateLimit = DefaultRateConnectScan
+	}
+
+	if !privileges.IsPrivileged && options.Retries == DefaultRetriesSynScan {
+		options.Retries = DefaultRetriesConnectScan
+	}
+
+	if options.Interface != "" {
+		if _, err := net.InterfaceByName(options.Interface); err != nil {
+			return fmt.Errorf("interface %s not found", options.Interface)
+		}
+	}
 
 	return err
 }
 
 func (options *Options) isSynScan() bool {
 	return isPrivileged() && options.ScanType == SynScan
+}
+
+func (options *Options) scanType() string {
+	if options.isSynScan() {
+		return "SYN"
+	}
+	return "CONNECT"
 }
