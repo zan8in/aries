@@ -32,6 +32,8 @@ type Options struct {
 
 func ParseOptions() *Options {
 
+	ShowBanner()
+
 	options := &Options{}
 
 	flagSet := goflags.NewFlagSet()

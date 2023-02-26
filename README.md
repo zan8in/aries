@@ -1,4 +1,4 @@
-# Aries 
+## Aries 
 
 <p align="center">
     <img width="120" src="image/aries2.png"/>
@@ -6,8 +6,8 @@
 
 Aries  is a free and open-source network scanner. Nmap is used to discover hosts and services on a computer network by sending packets and analyzing the responses.
 
-# Features
+## Features
 - SYN (Silent) Scanning Mode
 
-# Reference
-- Naabu
+## Reference
+- [naabu](https://github.com/projectdiscovery/naabu)
