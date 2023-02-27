@@ -134,7 +134,7 @@ func (runner *Runner) connectScan(host string, port *port.Port) {
 	open, err := runner.scanner.ConnectPort(host, port, time.Duration(runner.options.Timeout)*time.Millisecond)
 	if open && err == nil {
 		if runner.options.Debug {
-			gologger.Print().Msgf("Received Transport (TCP) scan response from %s:%d\n", host, port.Port)
+			gologger.Debug().Msgf("Received Transport (TCP) scan response from %s:%d\n", host, port.Port)
 		}
 		runner.scanner.ScanResults.AddPort(host, port)
 	}

@@ -8,6 +8,7 @@ import (
 	"github.com/zan8in/aries/pkg/privileges"
 	"github.com/zan8in/goflags"
 	"github.com/zan8in/gologger"
+	"github.com/zan8in/gologger/levels"
 )
 
 type Options struct {
@@ -116,6 +117,10 @@ func (options *Options) validateOptions() (err error) {
 		if _, err := net.InterfaceByName(options.Interface); err != nil {
 			return fmt.Errorf("interface %s not found", options.Interface)
 		}
+	}
+
+	if options.Debug {
+		gologger.DefaultLogger.SetMaxLevel(levels.LevelDebug)
 	}
 
 	return err

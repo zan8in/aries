@@ -245,7 +245,7 @@ func (s *Scanner) TCPResultWorker() {
 	for ip := range s.tcpChan {
 		if s.Phase.Is(Scan) || s.stream {
 			if s.debug {
-				gologger.Print().Msgf("Received Transport (TCP) scan response from %s:%d\n", ip.ip, ip.port.Port)
+				gologger.Debug().Msgf("Received Transport (TCP) scan response from %s:%d\n", ip.ip, ip.port.Port)
 			}
 			s.ScanResults.AddPort(ip.ip, ip.port)
 		}
