@@ -1,0 +1,34 @@
+env:
+  - GO111MODULE=on
+before:
+  hooks:
+    - go mod tidy
+project_name: aries
+builds:
+  - id: aries-linux
+    ldflags:
+      - -s -w
+    binary: aries
+    env:
+      - CGO_ENABLED=1
+    main: ./cmd/aries/main.go
+    goos:
+      - linux
+    goarch:
+      - amd64
+archives:
+- format: zip
+
+checksum:
+  name_template: "{{ .ProjectName }}-linux-checksums.txt"
+
+announce:
+  slack:
+    enabled: true
+    channel: '#release'
+    username: GoReleaser
+    message_template: 'New Release: {{ .ProjectName }} {{.Tag}} is published! Check it out at {{ .ReleaseURL }}'
+
+  discord:
+    enabled: true
+    message_template: '**New Release: {{ .ProjectName }} {{.Tag}}** is published! Check it out at {{ .ReleaseURL }}'
