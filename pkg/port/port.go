@@ -10,6 +10,7 @@ type Port struct {
 	Port     int
 	Protocol protocol.Protocol
 	TLS      bool
+	Service  string
 }
 
 func (p *Port) String() string {

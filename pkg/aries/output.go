@@ -1,18 +1,10 @@
 package aries
 
 import (
+	"github.com/zan8in/aries/pkg/probeservice"
 	"github.com/zan8in/aries/pkg/result"
 	"github.com/zan8in/gologger"
 )
-
-func (runner *Runner) output(scanResult *result.Result) {
-	for hostResult := range scanResult.GetIPsPorts() {
-		gologger.Info().Msgf("Found %d ports on host %s (%s)\n", len(hostResult.Ports), hostResult.IP, hostResult.IP)
-		for _, port := range hostResult.Ports {
-			gologger.Silent().Msgf("%s:%d\n", hostResult.IP, port.Port)
-		}
-	}
-}
 
 func (r *Runner) handleOutput(scanResults *result.Result) {
 
@@ -32,7 +24,12 @@ func (r *Runner) handleOutput(scanResults *result.Result) {
 				}
 				gologger.Info().Msgf("Found %d ports on host %s (%s)\n", len(hostResult.Ports), host, hostResult.IP)
 				for _, p := range hostResult.Ports {
-					gologger.Silent().Msgf("%s:%d\n", hostResult.IP, p.Port)
+					serviceName := ""
+					service, ok := probeservice.Probe.NmapServiceMap.Load(p.Port)
+					if ok {
+						serviceName = service.(string)
+					}
+					gologger.Silent().Msgf("%s:%d\t%s\n", hostResult.IP, p.Port, serviceName)
 				}
 
 			}

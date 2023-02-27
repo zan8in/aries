@@ -244,9 +244,7 @@ func (s *Scanner) EnqueueTCP(ip string, pkgtype PkgFlag, ports ...*port.Port) {
 func (s *Scanner) TCPResultWorker() {
 	for ip := range s.tcpChan {
 		if s.Phase.Is(Scan) || s.stream {
-			if s.debug {
-				gologger.Debug().Msgf("Received Transport (TCP) scan response from %s:%d\n", ip.ip, ip.port.Port)
-			}
+			gologger.Print().Msgf("Discovered open port %d/%s on %s\n", ip.port.Port, ip.port.Protocol, ip.ip)
 			s.ScanResults.AddPort(ip.ip, ip.port)
 		}
 	}

@@ -29,6 +29,7 @@ type Options struct {
 	ScanType  string              // Scan Type
 	Debug     bool                // Prints out debug information
 	Interface string              // Interface to use for TCP packets
+	Output    string              // Output is the file to write found ports to.
 }
 
 func ParseOptions() *Options {
@@ -63,6 +64,10 @@ func ParseOptions() *Options {
 		flagSet.StringVarP(&options.ScanType, "s", "scan-type", SynScan, "type of port scan (SYN/CONNECT)"),
 		flagSet.StringSliceVarP(&options.IPVersion, "iv", "ip-version", nil, "ip version to scan of hostname (4,6) - (default 4)", goflags.NormalizedStringSliceOptions),
 		flagSet.StringVarP(&options.Interface, "i", "interface", "", "network Interface to use for port scan"),
+	)
+
+	flagSet.CreateGroup("output", "Output",
+		flagSet.StringVarP(&options.Output, "output", "o", "", "file to write output to (optional), support format: txt,csv,json"),
 	)
 
 	flagSet.CreateGroup("optimization", "Optimization",

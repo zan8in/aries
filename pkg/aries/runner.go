@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"net"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/remeh/sizedwaitgroup"
@@ -26,6 +27,8 @@ type Runner struct {
 	hostChan chan *net.IPNet
 
 	tempHostFile string
+
+	HostCount int
 }
 
 func NewRunner(options *Options) (*Runner, error) {
@@ -82,12 +85,16 @@ func (r *Runner) BackgroundWorkers() {
 func (runner *Runner) start() {
 	rand.Seed(time.Now().UnixNano())
 
+	starttime := time.Now()
+
 	isSynScanType := runner.options.isSynScan()
-	gologger.Print().Msgf("Running [%s] scan. Start time %s\n", runner.options.scanType(), dateutil.GetNowFullDateTime())
+
+	gologger.Print().Msgf("Initiating %s Scan. Starting Aries %s at %s\n", runner.options.scanType(), Version, dateutil.GetNowFullDateTime())
 
 	for cidr := range runner.hostChan {
 		ipStream, _ := mapcidr.IPAddressesAsStream(cidr.String())
 		for ip := range ipStream {
+			runner.HostCount++
 			for _, port := range runner.scanner.Ports {
 				if runner.scanner.ScanResults.HasSkipped(ip) {
 					continue
@@ -107,9 +114,14 @@ func (runner *Runner) start() {
 
 	runner.scanner.Phase.Set(scan.Done)
 
-	runner.handleOutput(runner.scanner.ScanResults)
+	// runner.handleOutput(runner.scanner.ScanResults)
 
-	gologger.Print().Msgf("\nAries finished at %s\n", dateutil.GetNowFullDateTime())
+	gologger.Print().Msgf("%d IP addresses (Found %d hosts up) scanned in %s. Aries finished at %s\n",
+		runner.HostCount,
+		runner.scanner.ScanResults.Len(),
+		strings.Split(time.Since(starttime).String(), ".")[0]+"s",
+		dateutil.GetNowFullDateTime(),
+	)
 }
 
 func (runner *Runner) Listener() {
@@ -133,9 +145,7 @@ func (runner *Runner) connectScan(host string, port *port.Port) {
 
 	open, err := runner.scanner.ConnectPort(host, port, time.Duration(runner.options.Timeout)*time.Millisecond)
 	if open && err == nil {
-		if runner.options.Debug {
-			gologger.Debug().Msgf("Received Transport (TCP) scan response from %s:%d\n", host, port.Port)
-		}
+		gologger.Print().Msgf("Discovered open port %d/%s on %s\n", port.Port, port.Protocol, host)
 		runner.scanner.ScanResults.AddPort(host, port)
 	}
 }
