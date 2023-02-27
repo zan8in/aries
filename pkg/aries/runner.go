@@ -145,6 +145,9 @@ func (runner *Runner) connectScan(host string, port *port.Port) {
 
 	open, err := runner.scanner.ConnectPort(host, port, time.Duration(runner.options.Timeout)*time.Millisecond)
 	if open && err == nil {
+		if isWindows() && (port.Port == 110 || port.Port == 25) {
+			return
+		}
 		gologger.Print().Msgf("Discovered open port %d/%s on %s\n", port.Port, port.Protocol, host)
 		runner.scanner.ScanResults.AddPort(host, port)
 	}
