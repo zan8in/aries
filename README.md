@@ -8,6 +8,8 @@ Aries  is a free and open-source network scanner. Nmap is used to discover hosts
 
 ## Features
 - SYN (Silent) Scanning Mode
+- Output format support `txt` `json` `csv` (ToDo)
+- API (ToDo)
 
 ## Prerequisite
 If the error is as follows:
@@ -32,6 +34,7 @@ Advanced usage
 # send 5000 packets to send per second (default 1000)
 aries -t 192.168.88.1/24 -rate 5000 
 ```
+
 
 ## Reference
 - [naabu](https://github.com/projectdiscovery/naabu)
