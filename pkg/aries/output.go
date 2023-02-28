@@ -37,7 +37,7 @@ func (r *Runner) handleOutput(scanResults *result.Result) {
 				}
 				gologger.Info().Msgf("Found %d ports on host %s (%s)\n", len(hostResult.Ports), hostname, hostResult.IP)
 				for _, p := range hostResult.Ports {
-					gologger.Silent().Msgf("%s:%d\t%s\t%s\n", hostResult.IP, p.Port, p.Service, p.ProbeProduct)
+					gologger.Silent().Msgf("%s:%d\t%s\t%s\t%s\t%s\n", hostResult.IP, p.Port, p.Service, p.ProbeProduct, p.Http, p.Title)
 				}
 
 			}

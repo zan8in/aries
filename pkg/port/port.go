@@ -12,6 +12,8 @@ type Port struct {
 	TLS          bool
 	Service      string
 	ProbeProduct string
+	Title        string
+	Http         string
 }
 
 func (p *Port) String() string {

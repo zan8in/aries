@@ -26,19 +26,47 @@ var (
 )
 
 func Test() {
-	str := "220 FileZilla Server 0.9.60 beta written by Tim Kosse (Tim.Kosse@gmx.de) Please visit http://sourceforge."
+	// str := "220 FileZilla Server 0.9.60 beta written by Tim Kosse (Tim.Kosse@gmx.de) Please visit http://sourceforge."
+
+	// nmapServiceProbes, err := f.ReadFile("probes/nmap-service-probes")
+	// if err != nil {
+	// 	return
+	// }
+
+	// nmapServiceProbesString := repairNMAPString(string(nmapServiceProbes))
+
+	// lines := strings.Split(nmapServiceProbesString, "\n")
+	// reg := "m|.*\r\n|"
+	// for _, line := range lines {
+	// 	if !isCommand(line) {
+	// 		continue
+	// 	}
+
+	// 	// service := strings.Split(line, " ")
+	// 	// nsp := NmapServiceProbes{Service: service[1]}
+
+	// 	// if strings.Index(line, "m|") > 0 {
+	// 	// 	re := regexp2.MustCompile(reg, 0)
+	// 	// 	match, _ := re.MatchString(line)
+	// 	// 	if match {
+	// 	// 		fmt.Println(line)
+	// 	// 	}
+	// 	// }
+
+	// }
 
 	fmt.Printf("Nmap Probes Len: %d\n", len(NmapProbes.NSP))
-	nsp, ok := NmapRegex(str)
-	if !ok {
-		fmt.Println("未发现指纹")
-		return
-	}
-	fmt.Println(nsp.Service, nsp.RegexString, nsp.ProbeProduct)
+	// nsp, ok := NmapRegex(str)
+	// if !ok {
+	// 	fmt.Println("未发现指纹")
+	// 	return
+	// }
+	// fmt.Println(nsp.Service, nsp.RegexString, nsp.ProbeProduct)
 
 }
 
 func NmapRegex(matchString string) (NmapServiceProbes, bool) {
+	// matchString = strings.ReplaceAll(matchString, "\n", "")
 	for _, regex := range NmapProbes.NSP {
 		re := regexp2.MustCompile(regex.RegexString, 0)
 		match, _ := re.MatchString(matchString)

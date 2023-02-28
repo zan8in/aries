@@ -10,6 +10,7 @@ import (
 	"github.com/zan8in/aries/pkg/port"
 	"github.com/zan8in/aries/pkg/probeservice"
 	"github.com/zan8in/aries/pkg/protocol"
+	"github.com/zan8in/aries/pkg/retryhttpclient"
 )
 
 const (
@@ -72,6 +73,12 @@ send:
 func (s *Scanner) ConnectVerify(host string, ports []*port.Port) []*port.Port {
 	var verifiedPorts []*port.Port
 
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println(r)
+		}
+	}()
+
 	for _, p := range ports {
 
 		conn, err := net.DialTimeout(p.Protocol.String(), fmt.Sprintf("%s:%d", host, p.Port), s.timeout)
@@ -81,8 +88,8 @@ func (s *Scanner) ConnectVerify(host string, ports []*port.Port) []*port.Port {
 		}
 		defer conn.Close()
 
-		buf := make([]byte, 0, 1024) // big buffer
-		tmp := make([]byte, 512)     // using small tmo buffer for demonstrating
+		buf := make([]byte, 0, 1024)
+		tmp := make([]byte, 512)
 		for {
 			if err = conn.SetReadDeadline(time.Now().Add(s.timeout)); err != nil {
 				break
@@ -93,13 +100,36 @@ func (s *Scanner) ConnectVerify(host string, ports []*port.Port) []*port.Port {
 			}
 			buf = append(buf, tmp[:n]...)
 		}
-
+		fmt.Println(string(buf))
 		pp := &port.Port{Port: p.Port, Protocol: p.Protocol, TLS: p.TLS}
 		if len(buf) > 0 {
 			nsp, ok := probeservice.NmapRegex(string(buf))
+			fmt.Println(nsp.RegexString)
 			if ok {
 				pp.Service = nsp.Service
 				pp.ProbeProduct = nsp.ProbeProduct
+			}
+		} else {
+
+			body, flag, err := retryhttpclient.CheckHttpsAndLives(host, p.Port)
+			fmt.Println(body, flag, err)
+			if flag != retryhttpclient.IS_NONE {
+				title := retryhttpclient.GetTitle(body)
+				pp.Title = title
+				pp.Http = flag
+				nsp, ok := probeservice.NmapRegex(body)
+				fmt.Println(nsp.RegexString)
+				if ok {
+					pp.Service = nsp.Service
+					pp.ProbeProduct = nsp.ProbeProduct
+				} else {
+
+				}
+			} else {
+				nsm, ok := probeservice.Probe.NmapServiceMap.Load(p.Port)
+				if ok {
+					pp.Service = nsm.(string)
+				}
 			}
 		}
 

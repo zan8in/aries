@@ -12,6 +12,7 @@ import (
 	"github.com/zan8in/aries/pkg/port"
 	"github.com/zan8in/aries/pkg/privileges"
 	"github.com/zan8in/aries/pkg/result"
+	"github.com/zan8in/aries/pkg/retryhttpclient"
 	"github.com/zan8in/aries/pkg/scan"
 	"github.com/zan8in/aries/pkg/util/dateutil"
 	"github.com/zan8in/aries/pkg/util/mapcidr"
@@ -57,6 +58,10 @@ func NewRunner(options *Options) (*Runner, error) {
 
 	runner.wgscan = sizedwaitgroup.New(runner.options.RateLimit)
 	runner.ticker = time.NewTicker(time.Second / time.Duration(runner.options.RateLimit))
+
+	if err = retryhttpclient.Init(); err != nil {
+		return runner, err
+	}
 
 	return runner, err
 }
