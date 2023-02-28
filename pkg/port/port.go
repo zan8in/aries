@@ -7,10 +7,11 @@ import (
 )
 
 type Port struct {
-	Port     int
-	Protocol protocol.Protocol
-	TLS      bool
-	Service  string
+	Port         int
+	Protocol     protocol.Protocol
+	TLS          bool
+	Service      string
+	ProbeProduct string
 }
 
 func (p *Port) String() string {

@@ -1,6 +1,9 @@
 package main
 
+import "github.com/zan8in/aries/pkg/probeservice"
+
 func main() {
+	probeservice.Test()
 	// s, ok := probeservice.Probe.NmapServiceMap.Load(1)
 	// if !ok {
 	// 	fmt.Println("err")

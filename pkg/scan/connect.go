@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/zan8in/aries/pkg/port"
+	"github.com/zan8in/aries/pkg/probeservice"
 	"github.com/zan8in/aries/pkg/protocol"
 )
 
@@ -66,4 +67,44 @@ send:
 	}
 
 	return true, err
+}
+
+func (s *Scanner) ConnectVerify(host string, ports []*port.Port) []*port.Port {
+	var verifiedPorts []*port.Port
+
+	for _, p := range ports {
+
+		conn, err := net.DialTimeout(p.Protocol.String(), fmt.Sprintf("%s:%d", host, p.Port), s.timeout)
+		if err != nil {
+			verifiedPorts = append(verifiedPorts, p)
+			continue
+		}
+		defer conn.Close()
+
+		buf := make([]byte, 0, 1024) // big buffer
+		tmp := make([]byte, 512)     // using small tmo buffer for demonstrating
+		for {
+			if err = conn.SetReadDeadline(time.Now().Add(s.timeout)); err != nil {
+				break
+			}
+			n, err := conn.Read(tmp)
+			if err != nil {
+				break
+			}
+			buf = append(buf, tmp[:n]...)
+		}
+
+		pp := &port.Port{Port: p.Port, Protocol: p.Protocol, TLS: p.TLS}
+		if len(buf) > 0 {
+			nsp, ok := probeservice.NmapRegex(string(buf))
+			if ok {
+				pp.Service = nsp.Service
+				pp.ProbeProduct = nsp.ProbeProduct
+			}
+		}
+
+		verifiedPorts = append(verifiedPorts, pp)
+	}
+
+	return verifiedPorts
 }

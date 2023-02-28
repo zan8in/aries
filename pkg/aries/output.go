@@ -37,12 +37,7 @@ func (r *Runner) handleOutput(scanResults *result.Result) {
 				}
 				gologger.Info().Msgf("Found %d ports on host %s (%s)\n", len(hostResult.Ports), hostname, hostResult.IP)
 				for _, p := range hostResult.Ports {
-					serviceName := ""
-					service, ok := probeservice.Probe.NmapServiceMap.Load(p.Port)
-					if ok {
-						serviceName = service.(string)
-					}
-					gologger.Silent().Msgf("%s:%d\t%s\n", hostResult.IP, p.Port, serviceName)
+					gologger.Silent().Msgf("%s:%d\t%s\t%s\n", hostResult.IP, p.Port, p.Service, p.ProbeProduct)
 				}
 
 			}

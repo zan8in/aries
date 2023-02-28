@@ -1,16 +1,17 @@
 package aries
 
 import (
-	"fmt"
 	"math/rand"
 	"net"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/remeh/sizedwaitgroup"
 	"github.com/zan8in/aries/pkg/port"
 	"github.com/zan8in/aries/pkg/privileges"
+	"github.com/zan8in/aries/pkg/result"
 	"github.com/zan8in/aries/pkg/scan"
 	"github.com/zan8in/aries/pkg/util/dateutil"
 	"github.com/zan8in/aries/pkg/util/mapcidr"
@@ -114,7 +115,10 @@ func (runner *Runner) start() {
 
 	runner.scanner.Phase.Set(scan.Done)
 
-	// runner.handleOutput(runner.scanner.ScanResults)
+	runner.ConnectVerification()
+
+	runner.handleOutput(runner.scanner.ScanResults)
+
 	runner.WriteOutput(runner.scanner.ScanResults)
 
 	gologger.Print().Msgf("%d IP addresses (Found %d hosts up) scanned in %s. Aries finished at %s\n",
@@ -123,11 +127,6 @@ func (runner *Runner) start() {
 		strings.Split(time.Since(starttime).String(), ".")[0]+"s",
 		dateutil.GetNowFullDateTime(),
 	)
-}
-
-func (runner *Runner) Listener() {
-	fmt.Println("Listen end")
-	runner.handleOutput(runner.scanner.ScanResults)
 }
 
 func (r *Runner) handleHostPortSyn(ip string, p *port.Port) {
@@ -157,4 +156,29 @@ func (runner *Runner) connectScan(host string, port *port.Port) {
 // Close runner instance
 func (runner *Runner) Close() {
 	os.RemoveAll(runner.tempHostFile)
+}
+
+func (r *Runner) ConnectVerification() {
+	r.scanner.Phase.Set(scan.Scan)
+	var swg sync.WaitGroup
+	limiter := time.NewTicker(time.Second / time.Duration(r.options.RateLimit))
+
+	verifiedResult := result.NewResult()
+
+	VerifyChan := make(chan *result.HostResult)
+	defer close(VerifyChan)
+
+	for hostResult := range r.scanner.ScanResults.GetIPsPorts() {
+		<-limiter.C
+		swg.Add(1)
+		go func(hostResult *result.HostResult) {
+			defer swg.Done()
+			results := r.scanner.ConnectVerify(hostResult.IP, hostResult.Ports)
+			verifiedResult.SetPorts(hostResult.IP, results)
+		}(hostResult)
+	}
+
+	r.scanner.ScanResults = verifiedResult
+
+	swg.Wait()
 }

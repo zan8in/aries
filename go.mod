@@ -7,6 +7,7 @@ require (
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d
 	github.com/bits-and-blooms/bloom/v3 v3.3.1
 	github.com/cockroachdb/pebble v0.0.0-20221229212011-811a8c0e741b
+	github.com/dlclark/regexp2 v1.8.1
 	github.com/google/gopacket v1.1.19
 	github.com/hashicorp/golang-lru/v2 v2.0.1
 	github.com/json-iterator/go v1.1.12
