@@ -115,6 +115,7 @@ func (runner *Runner) start() {
 	runner.scanner.Phase.Set(scan.Done)
 
 	// runner.handleOutput(runner.scanner.ScanResults)
+	runner.WriteOutput(runner.scanner.ScanResults)
 
 	gologger.Print().Msgf("%d IP addresses (Found %d hosts up) scanned in %s. Aries finished at %s\n",
 		runner.HostCount,

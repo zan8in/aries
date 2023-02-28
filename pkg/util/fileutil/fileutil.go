@@ -10,6 +10,7 @@ import (
 	"io/fs"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -453,4 +454,33 @@ func CountLinesWithOptions(reader io.Reader, separator []byte, filter func([]byt
 		}
 	}
 	return count, scanner.Err()
+}
+
+type FileType = uint8
+
+const (
+	FILE_TXT = iota
+	FILE_JSON
+	FILE_CSV
+	NOT_FOUND
+)
+
+func FileExt(filename string) FileType {
+	ext := path.Ext(filename)
+	switch ext {
+	case ".txt":
+		return FILE_TXT
+	case ".json":
+		return FILE_JSON
+	case ".csv":
+		return FILE_CSV
+	default:
+		return NOT_FOUND
+	}
+}
+
+func BufferWriteAppend(file *os.File, content string) error {
+	buf := bufio.NewWriter(file)
+	buf.WriteString(content)
+	return buf.Flush()
 }

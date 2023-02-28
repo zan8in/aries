@@ -6,6 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/zan8in/aries/pkg/privileges"
+	"github.com/zan8in/aries/pkg/util/fileutil"
 	"github.com/zan8in/goflags"
 	"github.com/zan8in/gologger"
 	"github.com/zan8in/gologger/levels"
@@ -90,10 +91,10 @@ func ParseOptions() *Options {
 }
 
 var (
-	errNoInputList   = errors.New("no input list provided")
-	errOutputMode    = errors.New("both verbose and silent mode specified")
-	errZeroValue     = errors.New("cannot be zero")
-	errTwoOutputMode = errors.New("both json and csv mode specified")
+	errNoInputList    = errors.New("no input list provided")
+	errOutputFielType = errors.New("output file type error, support txt, json, csv")
+	errZeroValue      = errors.New("cannot be zero")
+	errTwoOutputMode  = errors.New("both json and csv mode specified")
 )
 
 func (options *Options) validateOptions() (err error) {
@@ -128,7 +129,27 @@ func (options *Options) validateOptions() (err error) {
 		gologger.DefaultLogger.SetMaxLevel(levels.LevelDebug)
 	}
 
+	if len(options.Output) > 0 {
+		if err := checkOutput(options.Output); err != nil {
+			return err
+		}
+	}
+
 	return err
+}
+
+func checkOutput(output string) error {
+	fileType := fileutil.FileExt(output)
+	switch fileType {
+	case fileutil.FILE_TXT:
+		return nil
+	case fileutil.FILE_JSON:
+		return nil
+	case fileutil.FILE_CSV:
+		return nil
+	default:
+		return errOutputFielType
+	}
 }
 
 func (options *Options) isSynScan() bool {
