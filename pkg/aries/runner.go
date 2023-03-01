@@ -164,14 +164,14 @@ func (runner *Runner) Close() {
 }
 
 func (r *Runner) ConnectVerification() {
+	gologger.Print().Msg("Starting Nmap Service Probes...")
+
 	r.scanner.Phase.Set(scan.Scan)
+
 	var swg sync.WaitGroup
 	limiter := time.NewTicker(time.Second / time.Duration(r.options.RateLimit))
 
 	verifiedResult := result.NewResult()
-
-	VerifyChan := make(chan *result.HostResult)
-	defer close(VerifyChan)
 
 	for hostResult := range r.scanner.ScanResults.GetIPsPorts() {
 		<-limiter.C

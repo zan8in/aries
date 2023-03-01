@@ -80,7 +80,7 @@ func (r *Runner) WriteOutput(scanResults *result.Result) {
 	if fileType == fileutil.FILE_CSV {
 		csvutil = csv.NewWriter(file)
 		file.WriteString("\xEF\xBB\xBF")
-		csvutil.Write([]string{"HOST", "IP", "PORT", "CDN", "HOST:PORT", "IP:PORT"})
+		// csvutil.Write([]string{"Host", "IP", "PORT", "Protocol", "Product", "CDN", "URL", "Title"})
 	}
 
 	switch {
@@ -143,7 +143,30 @@ func (or *OutputResult) CSV() []string {
 	if or.Host == "ip" {
 		or.Host = or.IP
 	}
-	return []string{or.Host, or.IP, strconv.Itoa(or.Port.Port), cndName(or.IsCDNIP), or.Host + ":" + strconv.Itoa(or.Port.Port), or.IP + ":" + strconv.Itoa(or.Port.Port)}
+	// "Host", "IP", "PORT", "Protocol", "Product", "CDN", "URL", "Title"
+	var (
+		host string
+		ip   string
+		url  string
+	)
+
+	host = or.Host + ":" + strconv.Itoa(or.Port.Port)
+	ip = or.IP + ":" + strconv.Itoa(or.Port.Port)
+
+	if len(or.Port.Http) > 0 {
+		url = or.Port.Http + "://" + host
+	}
+
+	return []string{
+		host,
+		ip,
+		strconv.Itoa(or.Port.Port),
+		or.Port.Service,
+		or.Port.ProbeProduct,
+		cndName(or.IsCDNIP),
+		url,
+		or.Port.Title,
+	}
 }
 
 func cndName(b bool) string {

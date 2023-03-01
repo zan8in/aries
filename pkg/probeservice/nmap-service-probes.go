@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/dlclark/regexp2"
+	"github.com/zan8in/aries/pkg/retryhttpclient"
 )
 
 //go:embed probes/*
@@ -23,6 +24,10 @@ type NmapServiceProbes struct {
 
 var (
 	NmapProbes = &Nmap{}
+)
+
+var (
+	UDP_PORT = []int{53, 69, 88, 111, 123, 137, 161, 177, 427, 520, 523, 626, 1434, 1604, 1701, 1900, 2425, 2638, 4000, 5060, 5351, 5353, 53413, 5683, 11211, 20000, 32750, 32751, 32752, 32753, 32754, 32755, 32756, 32757, 32758, 32759, 32760, 32761, 32762, 32763, 32764, 32765, 32766, 32767, 32768, 32769, 32770, 32771, 32772, 32773, 32774, 32775, 32776, 32777, 32778, 32779, 32780, 32781, 32782, 32783, 32784, 32785, 32786, 32787, 32788, 32789, 32790, 32791, 32792, 32793, 32794, 32795, 32796, 32797, 32798, 32799, 32800, 32801, 32802, 32803, 32804, 32805, 32806, 32807, 32808, 32809, 32810, 38978, 44818, 55000, 55001, 55002, 55003}
 )
 
 func Test() {
@@ -79,6 +84,59 @@ func NmapRegex(matchString string) (NmapServiceProbes, bool) {
 
 func init() {
 	InitNmapServiceProbes()
+}
+
+// return service, probeProduct, title, httpFlag
+func Start(tcpRead, host string, port int) (string, string, string, string) {
+	fmt.Println(tcpRead)
+	var (
+		service      string
+		probeProduct string
+		title        string
+		httpFlag     string
+	)
+	if len(tcpRead) > 0 {
+		nsp, ok := NmapRegex(tcpRead)
+		fmt.Println(nsp.RegexString)
+		if ok {
+			service = nsp.Service
+			probeProduct = nsp.ProbeProduct
+			return service, probeProduct, title, httpFlag
+		}
+	}
+
+	if !IsUDP(port) {
+		body, flag, _ := retryhttpclient.CheckHttpsAndLives(host, port)
+		fmt.Println(body, flag)
+		if flag != retryhttpclient.IS_NONE {
+			title = retryhttpclient.GetTitle(body)
+			httpFlag = flag
+			nsp, ok := NmapRegex(body)
+			fmt.Println(nsp.RegexString)
+			if ok {
+				service = nsp.Service
+				probeProduct = nsp.ProbeProduct
+				return service, probeProduct, title, httpFlag
+			}
+		}
+	}
+
+	nsm, ok := Probe.NmapServiceMap.Load(port)
+	if ok {
+		service = nsm.(string)
+		return service, probeProduct, title, httpFlag
+	}
+
+	return service, probeProduct, title, httpFlag
+}
+
+func IsUDP(port int) bool {
+	for _, p := range UDP_PORT {
+		if p == port {
+			return true
+		}
+	}
+	return false
 }
 
 func InitNmapServiceProbes() {

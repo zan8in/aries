@@ -1,9 +1,18 @@
 package main
 
-import "github.com/zan8in/aries/pkg/probeservice"
+import (
+	"fmt"
+	"strconv"
+)
 
 func main() {
-	probeservice.Test()
+	// probeservice.Test()
+	// a := "32750 - 32810"
+	str := ""
+	for i := 55000; i <= 55003; i++ {
+		str += strconv.Itoa(i) + ","
+	}
+	fmt.Println(str)
 	// s, ok := probeservice.Probe.NmapServiceMap.Load(1)
 	// if !ok {
 	// 	fmt.Println("err")
