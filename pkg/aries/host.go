@@ -9,11 +9,15 @@ import (
 	"strings"
 
 	"github.com/remeh/sizedwaitgroup"
+	"github.com/zan8in/aries/pkg/util/fileutil"
 	"github.com/zan8in/aries/pkg/util/iputil"
 	"github.com/zan8in/gologger"
 )
 
-var tempfile = "aries-temp-hosts-*"
+var (
+	tempfile   = "aries-temp-hosts-*"
+	ExcludeIps = []string{}
+)
 
 func (runner *Runner) PreprocessingHosts() error {
 	var err error
@@ -23,6 +27,8 @@ func (runner *Runner) PreprocessingHosts() error {
 		return err
 	}
 	defer tempHosts.Close()
+
+	ExcludeIps, _ = parseExcludedIps(runner.options)
 
 	if len(runner.options.Host) > 0 {
 		for _, v := range runner.options.Host {
@@ -76,6 +82,10 @@ func (runner *Runner) addTarget(target string) error {
 		return nil
 	}
 
+	if isExcludeIp(target, ExcludeIps) {
+		return fmt.Errorf("%s is Exclude Ip", target)
+	}
+
 	if iputil.IsCIDR(target) {
 		runner.hostChan <- iputil.ToCidr(target)
 		if err := runner.scanner.IPRanger.AddHostWithMetadata(target, "cidr"); err != nil { // Add cidr directly to ranger, as single ips would allocate more resources later
@@ -104,6 +114,10 @@ func (runner *Runner) addTarget(target string) error {
 		return err
 	}
 	for _, ip := range ips {
+		if isExcludeIp(ip, ExcludeIps) {
+			return fmt.Errorf("%s is Exclude Ip", ip)
+		}
+
 		runner.hostChan <- iputil.ToCidr(ip)
 		if err := runner.scanner.IPRanger.AddHostWithMetadata(ip, target); err != nil {
 			gologger.Warning().Msgf("%s\n", err)
@@ -134,4 +148,41 @@ func (r *Runner) resolveFQDN(target string) ([]string, error) {
 	hostIPS = append(hostIPS, initialHosts[0])
 
 	return hostIPS, nil
+}
+
+func parseExcludedIps(options *Options) ([]string, error) {
+	var excludedIps []string
+	if options.ExcludeIps != "" {
+		excludedIps = append(excludedIps, strings.Split(options.ExcludeIps, ",")...)
+	}
+
+	if options.ExcludeIpsFile != "" {
+		cdata, err := fileutil.ReadFile(options.ExcludeIpsFile)
+		if err != nil {
+			return excludedIps, err
+		}
+		for ip := range cdata {
+			// if isIpOrCidr(ip) {
+			excludedIps = append(excludedIps, ip)
+			// }
+		}
+	}
+
+	return excludedIps, nil
+}
+
+// func isIpOrCidr(s string) bool {
+// 	return iputil.IsIP(s) || iputil.IsCIDR(s)
+// }
+
+func isExcludeIp(ip string, excludeIps []string) bool {
+	if len(excludeIps) == 0 {
+		return false
+	}
+	for _, eip := range excludeIps {
+		if ip == eip {
+			return true
+		}
+	}
+	return false
 }
