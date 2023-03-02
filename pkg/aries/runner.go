@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/remeh/sizedwaitgroup"
@@ -30,7 +31,8 @@ type Runner struct {
 
 	tempHostFile string
 
-	HostCount int
+	HostCount int32
+	PortCount int32
 }
 
 func NewRunner(options *Options) (*Runner, error) {
@@ -95,12 +97,19 @@ func (runner *Runner) start() {
 
 	isSynScanType := runner.options.isSynScan()
 
-	gologger.Print().Msgf("Initiating %s Scan. Starting Aries %s at %s\n", runner.options.scanType(), Version, dateutil.GetNowFullDateTime())
+	gologger.Print().Msgf(
+		"Initiating %s Scan (Package to send %d times/s). Starting Aries %s at %s\n",
+		runner.options.scanType(),
+		runner.options.RateLimit,
+		Version,
+		dateutil.GetNowFullDateTime(),
+	)
 
 	for cidr := range runner.hostChan {
 		ipStream, _ := mapcidr.IPAddressesAsStream(cidr.String())
 		for ip := range ipStream {
-			runner.HostCount++
+			go atomic.AddInt32(&runner.HostCount, 1)
+
 			for _, port := range runner.scanner.Ports {
 				if runner.scanner.ScanResults.HasSkipped(ip) {
 					continue
@@ -120,18 +129,26 @@ func (runner *Runner) start() {
 
 	runner.scanner.Phase.Set(scan.Done)
 
-	runner.ConnectVerification()
+	runner.NmapServiceProbes()
 
 	runner.handleOutput(runner.scanner.ScanResults)
 
 	runner.WriteOutput(runner.scanner.ScanResults)
 
-	gologger.Print().Msgf("%d IP addresses (Found %d hosts up) scanned in %s. Aries finished at %s\n",
+	gologger.Print().Msgf("%d IP addresses (Found %d hosts %d ports up) scanned in %s. Aries finished at %s\n",
 		runner.HostCount,
 		runner.scanner.ScanResults.Len(),
+		runner.portCount(),
 		strings.Split(time.Since(starttime).String(), ".")[0]+"s",
 		dateutil.GetNowFullDateTime(),
 	)
+}
+
+func (r *Runner) portCount() int32 {
+	if r.options.isSynScan() {
+		return r.scanner.PortCount
+	}
+	return r.PortCount
 }
 
 func (r *Runner) handleHostPortSyn(ip string, p *port.Port) {
@@ -154,7 +171,10 @@ func (runner *Runner) connectScan(host string, port *port.Port) {
 			return
 		}
 		gologger.Print().Msgf("Discovered open port %d/%s on %s\n", port.Port, port.Protocol, host)
+
 		runner.scanner.ScanResults.AddPort(host, port)
+
+		go atomic.AddInt32(&runner.PortCount, 1)
 	}
 }
 
@@ -163,10 +183,19 @@ func (runner *Runner) Close() {
 	os.RemoveAll(runner.tempHostFile)
 }
 
-func (r *Runner) ConnectVerification() {
-	gologger.Print().Msg("Starting Nmap Service Probes...")
+func (r *Runner) NmapServiceProbes() {
+	if !r.options.NmapServiceProbes {
+		return
+	}
 
 	r.scanner.Phase.Set(scan.Scan)
+	defer r.scanner.Phase.Set(scan.Done)
+
+	if r.scanner.ScanResults.Len() == 0 {
+		return
+	}
+
+	gologger.Print().Msg("Starting Nmap Service Probes...")
 
 	var swg sync.WaitGroup
 	limiter := time.NewTicker(time.Second / time.Duration(r.options.RateLimit))
@@ -176,10 +205,13 @@ func (r *Runner) ConnectVerification() {
 	for hostResult := range r.scanner.ScanResults.GetIPsPorts() {
 		<-limiter.C
 		swg.Add(1)
+
 		go func(hostResult *result.HostResult) {
 			defer swg.Done()
-			results := r.scanner.ConnectVerify(hostResult.IP, hostResult.Ports)
+
+			results := r.scanner.NmapServiceProbesScan(hostResult.IP, hostResult.Ports)
 			verifiedResult.SetPorts(hostResult.IP, results)
+
 		}(hostResult)
 	}
 

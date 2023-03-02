@@ -7,6 +7,7 @@ import (
 	"net"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/google/gopacket"
@@ -115,6 +116,8 @@ type Scanner struct {
 	debug               bool
 	handlers            interface{} //nolint
 	stream              bool
+
+	PortCount int32
 }
 
 // PkgSend is a TCP package
@@ -246,6 +249,7 @@ func (s *Scanner) TCPResultWorker() {
 		if s.Phase.Is(Scan) || s.stream {
 			gologger.Print().Msgf("Discovered open port %d/%s on %s\n", ip.port.Port, ip.port.Protocol, ip.ip)
 			s.ScanResults.AddPort(ip.ip, ip.port)
+			go atomic.AddInt32(&s.PortCount, 1)
 		}
 	}
 }
