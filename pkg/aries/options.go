@@ -3,6 +3,8 @@ package aries
 import (
 	"fmt"
 	"net"
+	"runtime"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/zan8in/aries/pkg/privileges"
@@ -22,15 +24,16 @@ type Options struct {
 	ExcludePorts   string              // ExcludePorts is the list of ports to exclude from enumeration
 	TopPorts       string              // Tops ports to scan
 
-	Retries   int                 // Retries is the number of retries for the port
-	Threads   int                 // Internal worker threads
-	RateLimit int                 // RateLimit is the rate of port scan requests
-	Timeout   int                 // Timeout is the seconds to wait for ports to respond
-	IPVersion goflags.StringSlice // IP Version to use while resolving hostnames
-	ScanType  string              // Scan Type
-	Debug     bool                // Prints out debug information
-	Interface string              // Interface to use for TCP packets
-	Output    string              // Output is the file to write found ports to.
+	Retries           int                 // Retries is the number of retries for the port
+	Threads           int                 // Internal worker threads
+	RateLimit         int                 // RateLimit is the rate of port scan requests
+	Timeout           int                 // Timeout is the seconds to wait for ports to respond
+	IPVersion         goflags.StringSlice // IP Version to use while resolving hostnames
+	ScanType          string              // Scan Type
+	Debug             bool                // Prints out debug information
+	Interface         string              // Interface to use for TCP packets
+	Output            string              // Output is the file to write found ports to.
+	NmapServiceProbes bool                // Nmap Service Probes
 }
 
 func ParseOptions() *Options {
@@ -45,13 +48,13 @@ func ParseOptions() *Options {
 	flagSet.CreateGroup("input", "Input",
 		flagSet.StringSliceVarP(&options.Host, "t", "target", nil, "hosts to scan ports for (comma-separated)", goflags.NormalizedStringSliceOptions),
 		flagSet.StringVarP(&options.HostsFile, "T", "target-file", "", "list of hosts to scan ports (file)"),
-		// flagSet.StringVarP(&options.ExcludeIps, "eh", "exclude-hosts", "", "hosts to exclude from the scan (comma-separated)"),
-		// flagSet.StringVarP(&options.ExcludeIpsFile, "ef", "exclude-file", "", "list of hosts to exclude from scan (file)"),
+		flagSet.StringVarP(&options.ExcludeIps, "eh", "exclude-hosts", "", "hosts to exclude from the scan (comma-separated)"),
+		flagSet.StringVarP(&options.ExcludeIpsFile, "ef", "exclude-file", "", "list of hosts to exclude from scan (file)"),
 	)
 
 	flagSet.CreateGroup("port", "Port",
 		flagSet.StringVarP(&options.Ports, "p", "port", "", "ports to scan (80,443, 100-200)"),
-		flagSet.StringVarP(&options.TopPorts, "tp", "top-ports", "", "top ports to scan (default 100)"),
+		flagSet.StringVarP(&options.TopPorts, "tp", "top-ports", "", "top ports to scan, support: mini, 100, 1000, full, database, hotel, iot, ics (default 100)"),
 		flagSet.StringVarP(&options.ExcludePorts, "ep", "exclude-ports", "", "ports to exclude from scan (comma-separated)"),
 		flagSet.StringVarP(&options.PortsFile, "pf", "ports-file", "", "list of ports to scan (file)"),
 	)
@@ -63,6 +66,7 @@ func ParseOptions() *Options {
 
 	flagSet.CreateGroup("config", "Configuration",
 		flagSet.StringVarP(&options.ScanType, "s", "scan-type", SynScan, "type of port scan (SYN/CONNECT)"),
+		flagSet.BoolVar(&options.NmapServiceProbes, "A", false, "nmap service probes"),
 		flagSet.StringSliceVarP(&options.IPVersion, "iv", "ip-version", nil, "ip version to scan of hostname (4,6) - (default 4)", goflags.NormalizedStringSliceOptions),
 		flagSet.StringVarP(&options.Interface, "i", "interface", "", "network Interface to use for port scan"),
 	)
@@ -109,10 +113,11 @@ func (options *Options) validateOptions() (err error) {
 		options.Timeout = DefaultPortTimeoutConnectScan
 	}
 
-	if options.RateLimit == 0 {
+	if options.RateLimit <= 0 {
 		return errors.Wrap(errZeroValue, "rate")
 	} else if !privileges.IsPrivileged && options.RateLimit == DefaultRateSynScan {
 		options.RateLimit = DefaultRateConnectScan
+		options.autoChangeRateLimit()
 	}
 
 	if !privileges.IsPrivileged && options.Retries == DefaultRetriesSynScan {
@@ -136,6 +141,14 @@ func (options *Options) validateOptions() (err error) {
 	}
 
 	return err
+}
+
+func (options *Options) autoChangeRateLimit() {
+	if options.Ports == "1-65535" || options.Ports == "-" || strings.ToLower(options.TopPorts) == "full" {
+		if runtime.NumCPU() >= 6 {
+			options.RateLimit = 3000
+		}
+	}
 }
 
 func checkOutput(output string) error {
