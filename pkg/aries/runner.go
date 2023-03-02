@@ -16,7 +16,6 @@ import (
 	"github.com/zan8in/aries/pkg/scan"
 	"github.com/zan8in/aries/pkg/util/dateutil"
 	"github.com/zan8in/aries/pkg/util/mapcidr"
-	"github.com/zan8in/aries/pkg/util/sliceutil"
 	"github.com/zan8in/gologger"
 )
 
@@ -57,7 +56,7 @@ func NewRunner(options *Options) (*Runner, error) {
 	if err != nil {
 		return runner, err
 	}
-	sliceutil.RandSlice(runner.scanner.Ports)
+	// sliceutil.RandSlice(runner.scanner.Ports)
 
 	runner.wgscan = sizedwaitgroup.New(runner.options.RateLimit)
 	runner.ticker = time.NewTicker(time.Second / time.Duration(runner.options.RateLimit))

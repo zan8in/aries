@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net"
 	"runtime"
-	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/zan8in/aries/pkg/privileges"
@@ -144,11 +143,19 @@ func (options *Options) validateOptions() (err error) {
 }
 
 func (options *Options) autoChangeRateLimit() {
-	if options.Ports == "1-65535" || options.Ports == "-" || strings.ToLower(options.TopPorts) == "full" {
-		if runtime.NumCPU() >= 6 {
-			options.RateLimit = 3000
-		}
-	}
+	NumCPU := runtime.NumCPU()
+	options.RateLimit = NumCPU * 50
+
+	// if options.Ports == "1-65535" || options.Ports == "-" || strings.ToLower(options.TopPorts) == "full" {
+	// 	// linux(root) + syn = cpu num * 50
+	// 	// eg: 4 core = ratelimit 200
+	// 	if options.isSynScan() {
+	// 		options.RateLimit = NumCPU * 50
+	// 	}
+	// 	if options.isConnectScan() {
+	// 		options.RateLimit = NumCPU * 100
+	// 	}
+	// }
 }
 
 func checkOutput(output string) error {
@@ -167,6 +174,10 @@ func checkOutput(output string) error {
 
 func (options *Options) isSynScan() bool {
 	return isPrivileged() && options.ScanType == SynScan
+}
+
+func (options *Options) isConnectScan() bool {
+	return options.ScanType == ConnectScan
 }
 
 func (options *Options) scanType() string {
