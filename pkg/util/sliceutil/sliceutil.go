@@ -2,6 +2,7 @@ package sliceutil
 
 import (
 	"math/rand"
+	"reflect"
 	"strconv"
 	"time"
 )
@@ -80,4 +81,55 @@ func ToInt(s []string) ([]int, error) {
 	}
 
 	return ns, nil
+}
+
+// 切片乱序
+func RandSlice(slice interface{}) {
+	rv := reflect.ValueOf(slice)
+	if rv.Type().Kind() != reflect.Slice {
+		return
+	}
+
+	length := rv.Len()
+	if length < 2 {
+		return
+	}
+
+	swap := reflect.Swapper(slice)
+	rand.Seed(time.Now().Unix())
+	for i := length - 1; i >= 0; i-- {
+		j := rand.Intn(length)
+		swap(i, j)
+	}
+	return
+}
+
+// 字符串数组
+func RandomString(strings []string) string {
+
+	for i := len(strings) - 1; i > 0; i-- {
+		num := rand.Intn(i + 1)
+		strings[i], strings[num] = strings[num], strings[i]
+	}
+
+	str := ""
+	for i := 0; i < len(strings); i++ {
+		str += strings[i]
+	}
+	return str
+}
+
+// interface
+func RandomInterface(obj []interface{}) []interface{} {
+
+	for i := len(obj) - 1; i > 0; i-- {
+		num := rand.Intn(i + 1)
+		obj[i], obj[num] = obj[num], obj[i]
+	}
+
+	new_obj := make([]interface{}, 0)
+	for i := 0; i < len(obj); i++ {
+		new_obj = append(new_obj, obj[i])
+	}
+	return new_obj
 }
