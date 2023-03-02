@@ -39,3 +39,4 @@ aries -t 192.168.88.1/24 -rate 5000
 
 ## Reference
 - [naabu](https://github.com/projectdiscovery/naabu)
+- [vscan-go](https://github.com/RickGray/vscan-go)

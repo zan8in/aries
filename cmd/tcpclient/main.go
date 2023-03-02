@@ -3,42 +3,59 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net"
-	"net/http"
 	"os"
 	"time"
+
+	"github.com/lcvvvv/gonmap"
 )
 
 func main() {
-	addr := "47.103.154.55:27017"
-	conn, err := net.Dial("tcp", addr)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Fatal error: %s", err.Error())
-		os.Exit(1)
+	var scanner = gonmap.New()
+	host := "192.168.88.203"
+	port := 3306
+	status, response := scanner.ScanTimeout(host, port, time.Second*30)
+	// fmt.Println(response, status)
+
+	if response != nil {
+		fmt.Println(response.FingerPrint.Service,
+			response.FingerPrint.ProbeName,
+			response.FingerPrint.ProductName,
+			response.FingerPrint.Version, status,
+			response.FingerPrint.DeviceType,
+			response.FingerPrint.Hostname,
+			response.FingerPrint.Info,
+		)
+		// fmt.Println(status, response.FingerPrint.Service, host, ":", port)
 	}
-	defer conn.Close()
+	// addr := "47.103.154.55:27017"
+	// conn, err := net.Dial("tcp", addr)
+	// if err != nil {
+	// 	fmt.Fprintf(os.Stderr, "Fatal error: %s", err.Error())
+	// 	os.Exit(1)
+	// }
+	// defer conn.Close()
 
-	log.Printf("connection server: %s success", addr)
-	send(conn)
+	// log.Printf("connection server: %s success", addr)
+	// send(conn)
 
-	resp, err := http.Get("http://" + addr)
-	if err != nil {
-		log.Println("Get err:", err)
-		return
-	}
-	defer resp.Body.Close()
+	// resp, err := http.Get("http://" + addr)
+	// if err != nil {
+	// 	log.Println("Get err:", err)
+	// 	return
+	// }
+	// defer resp.Body.Close()
 
-	// parse resp data
-	// 获取服务器端读到的数据---header
-	fmt.Println("Status = ", resp.Status)         // 状态
-	fmt.Println("StatusCode = ", resp.StatusCode) // 状态码
-	fmt.Println("Header = ", resp.Header)         // 响应头部
-	fmt.Println("Body = ", resp.Body)             // 响应包体
-	// resp body
-	content, err := ioutil.ReadAll(resp.Body)
-	log.Println("response body:", string(content))
+	// // parse resp data
+	// // 获取服务器端读到的数据---header
+	// fmt.Println("Status = ", resp.Status)         // 状态
+	// fmt.Println("StatusCode = ", resp.StatusCode) // 状态码
+	// fmt.Println("Header = ", resp.Header)         // 响应头部
+	// fmt.Println("Body = ", resp.Body)             // 响应包体
+	// // resp body
+	// content, err := ioutil.ReadAll(resp.Body)
+	// log.Println("response body:", string(content))
 }
 
 func send(conn net.Conn) {

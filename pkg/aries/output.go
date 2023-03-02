@@ -9,7 +9,6 @@ import (
 	"strconv"
 
 	"github.com/zan8in/aries/pkg/port"
-	"github.com/zan8in/aries/pkg/probeservice"
 	"github.com/zan8in/aries/pkg/result"
 	"github.com/zan8in/aries/pkg/util/fileutil"
 	"github.com/zan8in/gologger"
@@ -35,9 +34,21 @@ func (r *Runner) handleOutput(scanResults *result.Result) {
 				if host == "ip" {
 					hostname = hostResult.IP
 				}
-				gologger.Info().Msgf("Found %d ports on host %s (%s)\n", len(hostResult.Ports), hostname, hostResult.IP)
+				gologger.Print().Msgf(
+					"› Found %d ports on host %s (%s)\n",
+					len(hostResult.Ports),
+					hostname,
+					hostResult.IP,
+				)
 				for _, p := range hostResult.Ports {
-					gologger.Silent().Msgf("%s:%d\t%s\t%s\t%s\t%s\n", hostResult.IP, p.Port, p.Service, p.ProbeProduct, p.Http, p.Title)
+					gologger.Silent().Msgf(
+						"%s:%d\t%s\t%s %s\n",
+						hostResult.IP,
+						p.Port,
+						p.Service,
+						p.ProbeProduct,
+						p.Version,
+					)
 				}
 
 			}
@@ -95,10 +106,9 @@ func (r *Runner) WriteOutput(scanResults *result.Result) {
 				if host == "ip" {
 					hostname = hostResult.IP
 				}
-				gologger.Info().Msgf("Found %d ports on host %s (%s)\n", len(hostResult.Ports), hostname, hostResult.IP)
 
 				for _, p := range hostResult.Ports {
-					or := &OutputResult{Host: host, IP: hostResult.IP}
+					or := &OutputResult{Host: hostname, IP: hostResult.IP}
 					or.Port = p
 
 					switch fileType {
@@ -112,16 +122,13 @@ func (r *Runner) WriteOutput(scanResults *result.Result) {
 						fileutil.BufferWriteAppend(file, string(b)+",")
 					case fileutil.FILE_CSV:
 						csvutil.Write(or.CSV())
-						csvutil.Flush()
 					}
-					serviceName := ""
-					service, ok := probeservice.Probe.NmapServiceMap.Load(p.Port)
-					if ok {
-						serviceName = service.(string)
-					}
-					gologger.Silent().Msgf("%s:%d\t%s\n", hostResult.IP, p.Port, serviceName)
 				}
 
+			}
+			switch fileType {
+			case fileutil.FILE_CSV:
+				csvutil.Flush()
 			}
 		}
 	}
@@ -147,25 +154,17 @@ func (or *OutputResult) CSV() []string {
 	var (
 		host string
 		ip   string
-		url  string
 	)
 
 	host = or.Host + ":" + strconv.Itoa(or.Port.Port)
 	ip = or.IP + ":" + strconv.Itoa(or.Port.Port)
-
-	if len(or.Port.Http) > 0 {
-		url = or.Port.Http + "://" + host
-	}
 
 	return []string{
 		host,
 		ip,
 		strconv.Itoa(or.Port.Port),
 		or.Port.Service,
-		or.Port.ProbeProduct,
-		cndName(or.IsCDNIP),
-		url,
-		or.Port.Title,
+		or.Port.ProbeProduct + or.Port.Version,
 	}
 }
 

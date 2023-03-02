@@ -8,10 +8,10 @@ require (
 	github.com/axgle/mahonia v0.0.0-20180208002826-3358181d7394
 	github.com/bits-and-blooms/bloom/v3 v3.3.1
 	github.com/cockroachdb/pebble v0.0.0-20221229212011-811a8c0e741b
-	github.com/dlclark/regexp2 v1.8.1
 	github.com/google/gopacket v1.1.19
 	github.com/hashicorp/golang-lru/v2 v2.0.1
 	github.com/json-iterator/go v1.1.12
+	github.com/lcvvvv/gonmap v1.3.4
 	github.com/pkg/errors v0.9.1
 	github.com/projectdiscovery/retryablehttp-go v1.0.12
 	github.com/remeh/sizedwaitgroup v1.0.0
@@ -53,6 +53,7 @@ require (
 	github.com/logrusorgru/aurora v2.0.3+incompatible // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/microcosm-cc/bluemonday v1.0.21 // indirect
+	github.com/miekg/dns v1.1.50 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/onsi/ginkgo v1.16.4 // indirect
@@ -74,7 +75,9 @@ require (
 	github.com/tidwall/tinyqueue v0.1.1 // indirect
 	github.com/zan8in/fileutil v0.0.0-20220917063910-ce47dcc0cfa9 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
+	golang.org/x/mod v0.6.0 // indirect
 	golang.org/x/sys v0.5.0 // indirect
 	golang.org/x/text v0.7.0 // indirect
+	golang.org/x/tools v0.2.0 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 )
