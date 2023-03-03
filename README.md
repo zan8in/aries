@@ -26,11 +26,11 @@ To install libcap on Linux: `sudo apt install -y libpcap-dev`, on Mac: `sudo bre
 Basic usage
 ```
 aries -t 192.168.88.1/24
-aries -t example.com,hackerone.com
+aries -t example.com,scanme.nmap.org
 aries -T file.txt
 cat ./file.txt
 example.com
-hackerone.com
+scanme.nmap.org
 ```
 
 Nmap Service Probes

@@ -14,14 +14,15 @@ import (
 )
 
 type Options struct {
-	Host           goflags.StringSlice // Host is the single host or comma-separated list of hosts to find ports for
-	HostsFile      string              // HostsFile is the file containing list of hosts to find port for
-	ExcludeIps     string              // Ips or cidr to be excluded from the scan
-	ExcludeIpsFile string              // File containing Ips or cidr to exclude from the scan
-	Ports          string              // Ports is the ports to use for enumeration
-	PortsFile      string              // PortsFile is the file containing ports to use for enumeration
-	ExcludePorts   string              // ExcludePorts is the list of ports to exclude from enumeration
-	TopPorts       string              // Tops ports to scan
+	Host              goflags.StringSlice // Host is the single host or comma-separated list of hosts to find ports for
+	HostsFile         string              // HostsFile is the file containing list of hosts to find port for
+	ExcludeIps        string              // Ips or cidr to be excluded from the scan
+	ExcludeIpsFile    string              // File containing Ips or cidr to exclude from the scan
+	Ports             string              // Ports is the ports to use for enumeration
+	PortsFile         string              // PortsFile is the file containing ports to use for enumeration
+	ExcludePorts      string              // ExcludePorts is the list of ports to exclude from enumeration
+	TopPorts          string              // Tops ports to scan
+	ChooseRandomPorts bool                // Choose random ports
 
 	Retries           int                 // Retries is the number of retries for the port
 	Threads           int                 // Internal worker threads
@@ -56,6 +57,7 @@ func ParseOptions() *Options {
 		flagSet.StringVarP(&options.TopPorts, "tp", "top-ports", "", "top ports to scan, support: mini, 100, 1000, full, database, hotel, iot, ics (default 100)"),
 		flagSet.StringVarP(&options.ExcludePorts, "ep", "exclude-ports", "", "ports to exclude from scan (comma-separated)"),
 		flagSet.StringVarP(&options.PortsFile, "pf", "ports-file", "", "list of ports to scan (file)"),
+		flagSet.BoolVar(&options.ChooseRandomPorts, "rp", false, "Choose random ports"),
 	)
 
 	flagSet.CreateGroup("rate-limit", "Rate-limit",
