@@ -25,15 +25,61 @@ To install libcap on Linux: `sudo apt install -y libpcap-dev`, on Mac: `sudo bre
 ## Example
 Basic usage
 ```
-aries -t 192.168.88.1/24 # default top 100 ports
-aries -t example.com,hackerone.com -p - # scan all ports (1-65535)
-aries -T file.txt -tp 1000 # scan top 1000 ports
+aries -t 192.168.88.1/24
+aries -t example.com,hackerone.com
+aries -T file.txt
+cat ./file.txt
+example.com
+hackerone.com
 ```
 
-Advanced usage
+Nmap Service Probes
 ```
-# send 5000 packets to send per second (default 1000)
-aries -t 192.168.88.1/24 -rate 5000 
+aries -t 192.168.88.1/24 -A
+```
+
+Port Range
+```
+aries -t 192.168.88.168 -p 80,443,8000-8100
+aries -t 192.168.88.168 -p - # 1-65535
+aries -t 192.168.88.168 -tp 1000 # top 1000 ports
+aries -t 192.168.88.168 -tp full # 1-65535
+aries -t 192.168.88.168 -tp hotel
+aries -t 192.168.88.168 -tp database
+aries -t 192.168.88.168 -tp ics
+aries -t 192.168.88.168 -tp iot
+aries -t 192.168.88.168 -tp mini
+```
+
+Output File
+```
+aries -t 192.168.88.168 -o r.txt
+aries -t 192.168.88.168 -o r.json
+aries -t 192.168.88.168 -o r.csv
+```
+
+Exclude Hosts
+```
+aries -t 192.168.88.168/24 -eh 192.168.88.254,192.168.88.1
+aries -t 192.168.88.168/24 -ef filter.txt
+cat ./filter.txt
+192.168.88.254
+192.168.88.1
+```
+
+Exclude Ports
+```
+aries -t 192.168.88.168/24 -ep 110,25,53
+aries -t 192.168.88.168/24 -pf filter.txt
+cat ./filter.txt
+110
+25
+53
+```
+
+Rate Limit
+```
+aries -t 192.168.88.168/24 -rate 2000
 ```
 
 
