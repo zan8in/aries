@@ -23,14 +23,28 @@ The solution is as follows:
 To install libcap on Linux: `sudo apt install -y libpcap-dev`, on Mac: `sudo brew install libpcap`
 
 ## Example
-Basic usage
+
 ```
 aries -t 192.168.88.1/24
+aries -t 192.168.88.1/24,192.168.66.1/24
 aries -t example.com,scanme.nmap.org
+```
+
+Hosts File
+```
 aries -T file.txt
+
 cat ./file.txt
 example.com
 scanme.nmap.org
+```
+
+Ports File
+```
+aries -t 192.168.88.168
+
+cat ./ports.txt
+80,443,1433,8000-8100
 ```
 
 Nmap Service Probes
