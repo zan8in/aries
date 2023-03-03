@@ -114,8 +114,8 @@ func (options *Options) validateOptions() (err error) {
 
 	if options.RateLimit <= 0 {
 		return errors.Wrap(errZeroValue, "rate")
-	} else if !privileges.IsPrivileged && options.RateLimit == DefaultRateSynScan {
-		options.RateLimit = DefaultRateConnectScan
+	} else if options.RateLimit == DefaultRateSynScan {
+		// options.RateLimit = DefaultRateConnectScan
 		options.autoChangeRateLimit()
 	}
 
