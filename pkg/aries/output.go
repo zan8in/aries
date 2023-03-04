@@ -10,6 +10,7 @@ import (
 
 	"github.com/zan8in/aries/pkg/port"
 	"github.com/zan8in/aries/pkg/result"
+	"github.com/zan8in/aries/pkg/util/dateutil"
 	"github.com/zan8in/aries/pkg/util/fileutil"
 	"github.com/zan8in/gologger"
 )
@@ -57,7 +58,8 @@ func (r *Runner) handleOutput(scanResults *result.Result) {
 }
 
 func (r *Runner) WriteOutput(scanResults *result.Result) {
-	if len(r.options.Output) == 0 {
+
+	if scanResults.IsEmpty() {
 		return
 	}
 
@@ -70,7 +72,20 @@ func (r *Runner) WriteOutput(scanResults *result.Result) {
 	)
 
 	output = r.options.Output
-	fileType = fileutil.FileExt(r.options.Output)
+
+	if len(r.options.Output) == 0 {
+		if len(r.options.Host) > 0 {
+			output = r.options.Host[0] + ".csv"
+		} else if len(r.options.PortsFile) > 0 {
+			output = r.options.HostsFile + ".csv"
+		}
+	}
+
+	fileType = fileutil.FileExt(output)
+
+	if fileutil.FileOrFolderExists(output) {
+		output = fileutil.CombineNewFilename(output, dateutil.GetTimeFormat(), "-")
+	}
 
 	outputFolder := filepath.Dir(output)
 	if fileutil.FolderExists(outputFolder) {
@@ -91,7 +106,7 @@ func (r *Runner) WriteOutput(scanResults *result.Result) {
 	if fileType == fileutil.FILE_CSV {
 		csvutil = csv.NewWriter(file)
 		file.WriteString("\xEF\xBB\xBF")
-		// csvutil.Write([]string{"Host", "IP", "PORT", "Protocol", "Product", "CDN", "URL", "Title"})
+		csvutil.Write([]string{"Host", "IP", "PORT", "Protocol", "Product"})
 	}
 
 	switch {

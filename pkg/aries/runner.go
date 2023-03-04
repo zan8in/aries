@@ -184,9 +184,6 @@ func (runner *Runner) Close() {
 }
 
 func (r *Runner) NmapServiceProbes() {
-	if !r.options.NmapServiceProbes {
-		return
-	}
 
 	r.scanner.Phase.Set(scan.Scan)
 	defer r.scanner.Phase.Set(scan.Done)

@@ -484,3 +484,10 @@ func BufferWriteAppend(file *os.File, content string) error {
 	buf.WriteString(content)
 	return buf.Flush()
 }
+
+func CombineNewFilename(srcFile, destFile, delimiter string) string {
+	ftype := path.Ext(srcFile)
+	filename := strings.TrimSuffix(path.Base(srcFile), ftype)
+	newfile := filename + delimiter + destFile
+	return newfile + ftype
+}

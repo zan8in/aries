@@ -11,3 +11,8 @@ func GetNowDateTime() string {
 	now := time.Now()
 	return now.Format("01-02 15:04:05")
 }
+
+func GetTimeFormat() string {
+	now := time.Now()
+	return now.Format("0102-150505")
+}

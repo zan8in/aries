@@ -2,43 +2,54 @@ package main
 
 import (
 	"fmt"
-	"time"
+	"path"
+	"strings"
 
-	"github.com/zan8in/aries/pkg/probeservice/vscan"
+	"github.com/zan8in/aries/pkg/util/dateutil"
+	"github.com/zan8in/aries/pkg/util/fileutil"
 )
 
 func main() {
-	v := vscan.VScan{}
-	v.Init()
+	output := "result.csv"
+	if fileutil.FileOrFolderExists(output) {
+		fullfile := path.Base(output)
+		filetype := path.Ext(output)
+		filename := strings.TrimSuffix(fullfile, filetype)
+		newfile := filename + "-" + dateutil.GetTimeFormat()
+		newfile = newfile + filetype
+		fmt.Println(newfile)
+	}
 
-	var (
-		config *vscan.Config
-		target vscan.Target
-	)
-	config = &vscan.Config{}
-	config.Rarity = 7
-	config.SendTimeout = time.Duration(5) * time.Second
-	config.ReadTimeout = time.Duration(5) * time.Second
-	config.UseAllProbes = false
-	config.NULLProbeOnly = false
+	// v := vscan.VScan{}
+	// v.Init()
 
-	target = vscan.Target{}
-	target.IP = "104.16.100.52"
-	target.Port = 8443
-	target.Protocol = "tcp"
+	// var (
+	// 	config *vscan.Config
+	// 	target vscan.Target
+	// )
+	// config = &vscan.Config{}
+	// config.Rarity = 7
+	// config.SendTimeout = time.Duration(5) * time.Second
+	// config.ReadTimeout = time.Duration(5) * time.Second
+	// config.UseAllProbes = false
+	// config.NULLProbeOnly = false
 
-	result, _ := v.Explore(target, config)
-	fmt.Println(
-		target.IP,
-		target.Port,
-		result,
-	)
+	// target = vscan.Target{}
+	// target.IP = "104.16.100.52"
+	// target.Port = 8443
+	// target.Protocol = "tcp"
+
+	// result, _ := v.Explore(target, config)
+	// fmt.Println(
+	// 	target.IP,
+	// 	target.Port,
+	// 	result,
+	// )
 	// probeservice.Test()
 	// a := "32750 - 32810"
 	// str := ""
 	// for i := 55000; i <= 55003; i++ {
 	// 	str += strconv.Itoa(i) + ","
-	// }
 	// fmt.Println(str)
 	// s, ok := probeservice.Probe.NmapServiceMap.Load(1)
 	// if !ok {
