@@ -209,3 +209,12 @@ func (r *Result) HasDiscoveryIPS() bool {
 
 	return len(r.discoveryips) > 0
 }
+
+func (r *Result) SetDiscoveryIPS(ips chan string) {
+	r.Lock()
+	defer r.Unlock()
+
+	for ip := range ips {
+		r.discoveryips[ip] = struct{}{}
+	}
+}

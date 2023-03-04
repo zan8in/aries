@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/zan8in/aries/pkg/port"
-	"github.com/zan8in/aries/pkg/result"
 	"github.com/zan8in/aries/pkg/util/dateutil"
 	"github.com/zan8in/aries/pkg/util/fileutil"
 	"github.com/zan8in/gologger"
@@ -23,10 +22,10 @@ type OutputResult struct {
 	IsCDNIP bool       `json:"cdn,omitempty" csv:"cdn"`
 }
 
-func (r *Runner) handleOutput(scanResults *result.Result) {
+func (r *Runner) handleOutput() {
 	switch {
-	case scanResults.HasIPsPorts():
-		for hostResult := range scanResults.GetIPsPorts() {
+	case r.scanner.ScanResults.HasIPsPorts():
+		for hostResult := range r.scanner.ScanResults.GetIPsPorts() {
 			dt, err := r.scanner.IPRanger.GetHostsByIP(hostResult.IP)
 			if err != nil {
 				continue
@@ -58,9 +57,9 @@ func (r *Runner) handleOutput(scanResults *result.Result) {
 	}
 }
 
-func (r *Runner) WriteOutput(scanResults *result.Result) {
+func (r *Runner) WriteOutput() {
 
-	if scanResults.IsEmpty() {
+	if r.scanner.ScanResults.IsEmpty() {
 		return
 	}
 
@@ -114,8 +113,8 @@ func (r *Runner) WriteOutput(scanResults *result.Result) {
 		csvutil.Write([]string{"Host", "IP", "PORT", "Protocol", "Product"})
 	}
 
-	if scanResults.HasIPsPorts() {
-		for hostResult := range scanResults.GetIPsPorts() {
+	if r.scanner.ScanResults.HasIPsPorts() {
+		for hostResult := range r.scanner.ScanResults.GetIPsPorts() {
 			dt, err := r.scanner.IPRanger.GetHostsByIP(hostResult.IP)
 			if err != nil {
 				continue
@@ -153,9 +152,7 @@ func (r *Runner) WriteOutput(scanResults *result.Result) {
 		gologger.Print().Msgf("generate scan result report \"%s\"\n", output)
 	}
 
-	if len(scanResults.GetDiscoveryIPs()) > 0 {
-		fmt.Println(len(scanResults.GetDiscoveryIPs()))
-		fmt.Println(len(r.scanner.ScanResults.GetDiscoveryIPs()))
+	if r.scanner.ScanResults.HasDiscoveryIPS() {
 		output = "HostDiscovery-" + output
 		output = strings.ReplaceAll(output, ".csv", ".txt")
 		output = strings.ReplaceAll(output, ".json", ".txt")
@@ -166,7 +163,7 @@ func (r *Runner) WriteOutput(scanResults *result.Result) {
 		}
 		defer fileDsicovery.Close()
 
-		for ip := range scanResults.GetDiscoveryIPs() {
+		for ip := range r.scanner.ScanResults.GetDiscoveryIPs() {
 			fileutil.BufferWriteAppend(fileDsicovery, ip+"\n")
 		}
 		gologger.Print().Msgf("generate host discovery result report \"%s\"\n", output)

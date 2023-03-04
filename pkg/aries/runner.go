@@ -133,6 +133,7 @@ func (runner *Runner) start() {
 					disIp := scan.DiscoveredHost(ip)
 					if len(disIp) > 0 {
 						go atomic.AddInt32(&runner.HostCount, 1)
+						runner.scanner.ScanResults.AddDiscoveryIp(ip)
 						fmt.Fprintf(tempHosts, "%s\n", disIp)
 					}
 				}(ip)
@@ -153,13 +154,13 @@ func (runner *Runner) start() {
 		s := bufio.NewScanner(f)
 		for s.Scan() {
 			ip := s.Text()
-			runner.scanner.ScanResults.AddDiscoveryIp(ip)
+
 			for _, port := range runner.scanner.Ports {
 				if runner.scanner.ScanResults.HasSkipped(ip) {
 					continue
 				}
+				runner.scanner.Phase.Set(scan.Scan)
 				if isSynScanType {
-					runner.scanner.Phase.Set(scan.Scan)
 					runner.handleHostPortSyn(ip, port)
 				} else {
 					runner.wgscan.Add()
@@ -180,8 +181,8 @@ func (runner *Runner) start() {
 					if runner.scanner.ScanResults.HasSkipped(ip) {
 						continue
 					}
+					runner.scanner.Phase.Set(scan.Scan)
 					if isSynScanType {
-						runner.scanner.Phase.Set(scan.Scan)
 						runner.handleHostPortSyn(ip, port)
 					} else {
 						runner.wgscan.Add()
@@ -199,9 +200,9 @@ func (runner *Runner) start() {
 
 	runner.NmapServiceProbes()
 
-	runner.handleOutput(runner.scanner.ScanResults)
+	runner.handleOutput()
 
-	runner.WriteOutput(runner.scanner.ScanResults)
+	runner.WriteOutput()
 
 	gologger.Print().Msgf("%d IP addresses (Found %d hosts %d ports up) scanned in %s. Aries finished at %s\n",
 		runner.HostCount,
@@ -266,6 +267,7 @@ func (r *Runner) NmapServiceProbes() {
 	limiter := time.NewTicker(time.Second / time.Duration(r.options.RateLimit))
 
 	verifiedResult := result.NewResult()
+	verifiedResult.SetDiscoveryIPS(r.scanner.ScanResults.GetDiscoveryIPs())
 
 	for hostResult := range r.scanner.ScanResults.GetIPsPorts() {
 		<-limiter.C
