@@ -29,6 +29,10 @@ aries -t 192.168.88.1/24
 aries -t 192.168.88.1/24,192.168.66.1/24
 aries -t example.com,scanme.nmap.org
 ```
+Skip Host Discovery
+```
+aries -t 192.168.88.168 -Pn
+```
 
 Hosts File
 ```
