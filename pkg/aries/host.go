@@ -51,6 +51,7 @@ func (runner *Runner) PreprocessingHosts() error {
 	runner.tempHostFile = tempHosts.Name()
 
 	defer close(runner.hostChan)
+	defer close(runner.hostDiscoveryChan)
 
 	wg := sizedwaitgroup.New(runner.options.Threads)
 	f, err := os.Open(runner.tempHostFile)
@@ -87,10 +88,15 @@ func (runner *Runner) addTarget(target string) error {
 	}
 
 	if iputil.IsCIDR(target) {
-		runner.hostChan <- iputil.ToCidr(target)
+		if runner.options.SkipHostDiscovery {
+			runner.hostChan <- iputil.ToCidr(target)
+		} else {
+			runner.hostDiscoveryChan <- iputil.ToCidr(target)
+		}
 		if err := runner.scanner.IPRanger.AddHostWithMetadata(target, "cidr"); err != nil { // Add cidr directly to ranger, as single ips would allocate more resources later
 			gologger.Warning().Msgf("%s\n", err)
 		}
+
 		return nil
 	}
 
@@ -100,7 +106,11 @@ func (runner *Runner) addTarget(target string) error {
 		if ip.To4() != nil {
 			target = ip.To4().String()
 		}
-		runner.hostChan <- iputil.ToCidr(target)
+		if runner.options.SkipHostDiscovery {
+			runner.hostChan <- iputil.ToCidr(target)
+		} else {
+			runner.hostDiscoveryChan <- iputil.ToCidr(target)
+		}
 
 		err := runner.scanner.IPRanger.AddHostWithMetadata(target, "ip")
 		if err != nil {
@@ -118,7 +128,12 @@ func (runner *Runner) addTarget(target string) error {
 			return fmt.Errorf("%s is Exclude Ip", ip)
 		}
 
-		runner.hostChan <- iputil.ToCidr(ip)
+		if runner.options.SkipHostDiscovery {
+			runner.hostChan <- iputil.ToCidr(ip)
+		} else {
+			runner.hostDiscoveryChan <- iputil.ToCidr(ip)
+		}
+
 		if err := runner.scanner.IPRanger.AddHostWithMetadata(ip, target); err != nil {
 			gologger.Warning().Msgf("%s\n", err)
 		}

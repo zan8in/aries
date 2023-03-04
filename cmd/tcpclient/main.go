@@ -4,31 +4,80 @@ import (
 	"bufio"
 	"fmt"
 	"log"
+	"math/rand"
 	"net"
 	"os"
+	"strconv"
 	"time"
 
-	"github.com/lcvvvv/gonmap"
+	"github.com/remeh/sizedwaitgroup"
+	"github.com/zan8in/aries/pkg/scan"
 )
 
-func main() {
-	var scanner = gonmap.New()
-	host := "192.168.88.203"
-	port := 3306
-	status, response := scanner.ScanTimeout(host, port, time.Second*30)
-	// fmt.Println(response, status)
-
-	if response != nil {
-		fmt.Println(response.FingerPrint.Service,
-			response.FingerPrint.ProbeName,
-			response.FingerPrint.ProductName,
-			response.FingerPrint.Version, status,
-			response.FingerPrint.DeviceType,
-			response.FingerPrint.Hostname,
-			response.FingerPrint.Info,
-		)
-		// fmt.Println(status, response.FingerPrint.Service, host, ":", port)
+func query(i string) {
+	pr, err := scan.PingHosts([]string{i})
+	if err != nil {
+		fmt.Println("+++++++++++++++=", err.Error())
+		return
 	}
+	if pr.Hosts[0].Error == nil {
+		fmt.Println(pr.Hosts[0].Host)
+	}
+
+}
+
+func main() {
+	var addr []string
+	for i := 1; i <= 255; i++ {
+		addr = append(addr, "192.168.66."+strconv.Itoa(i))
+	}
+	// pr, err := scan.PingHosts(addr)
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// 	return
+	// }
+	// fmt.Println(len(pr.Hosts))
+	// for _, h := range pr.Hosts {
+	// 	fmt.Println(h)
+	// }
+
+	rand.Seed(time.Now().UnixNano())
+
+	// Typical use-case:
+	// 50 queries must be executed as quick as possible
+	// but without overloading the database, so only
+	// 8 routines should be started concurrently.
+	swg := sizedwaitgroup.New(100)
+	for _, h := range addr {
+		swg.Add()
+		go func(h string) {
+			defer swg.Done()
+			query(h)
+		}(h)
+	}
+
+	swg.Wait()
+
+	// for _, v := range addr {
+	// 	fmt.Println(v)
+	// }
+	// var scanner = gonmap.New()
+	// host := "192.168.88.203"
+	// port := 3306
+	// status, response := scanner.ScanTimeout(host, port, time.Second*30)
+	// // fmt.Println(response, status)
+
+	// if response != nil {
+	// 	fmt.Println(response.FingerPrint.Service,
+	// 		response.FingerPrint.ProbeName,
+	// 		response.FingerPrint.ProductName,
+	// 		response.FingerPrint.Version, status,
+	// 		response.FingerPrint.DeviceType,
+	// 		response.FingerPrint.Hostname,
+	// 		response.FingerPrint.Info,
+	// 	)
+	// 	// fmt.Println(status, response.FingerPrint.Service, host, ":", port)
+	// }
 	// addr := "47.103.154.55:27017"
 	// conn, err := net.Dial("tcp", addr)
 	// if err != nil {

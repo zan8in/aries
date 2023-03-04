@@ -16,9 +16,10 @@ type HostResult struct {
 // Result of the scan
 type Result struct {
 	sync.RWMutex
-	ipPorts map[string]map[string]*port.Port
-	ips     map[string]struct{}
-	skipped map[string]struct{}
+	ipPorts      map[string]map[string]*port.Port
+	ips          map[string]struct{}
+	skipped      map[string]struct{}
+	discoveryips map[string]struct{}
 }
 
 // NewResult structure
@@ -26,7 +27,8 @@ func NewResult() *Result {
 	ipPorts := make(map[string]map[string]*port.Port)
 	ips := make(map[string]struct{})
 	skipped := make(map[string]struct{})
-	return &Result{ipPorts: ipPorts, ips: ips, skipped: skipped}
+	discoveryips := make(map[string]struct{})
+	return &Result{ipPorts: ipPorts, ips: ips, skipped: skipped, discoveryips: discoveryips}
 }
 
 // AddPort to a specific ip
@@ -175,4 +177,35 @@ func (r *Result) HasSkipped(ip string) bool {
 
 	_, ok := r.skipped[ip]
 	return ok
+}
+
+func (r *Result) AddDiscoveryIp(ip string) {
+	r.Lock()
+	defer r.Unlock()
+
+	r.discoveryips[ip] = struct{}{}
+}
+
+func (r *Result) GetDiscoveryIPs() chan string {
+	r.Lock()
+
+	out := make(chan string)
+
+	go func() {
+		defer close(out)
+		defer r.Unlock()
+
+		for ip := range r.discoveryips {
+			out <- ip
+		}
+	}()
+
+	return out
+}
+
+func (r *Result) HasDiscoveryIPS() bool {
+	r.RLock()
+	defer r.RUnlock()
+
+	return len(r.discoveryips) > 0
 }

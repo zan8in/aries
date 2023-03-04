@@ -34,6 +34,7 @@ type Options struct {
 	Interface         string              // Interface to use for TCP packets
 	Output            string              // Output is the file to write found ports to.
 	NmapServiceProbes bool                // Nmap Service Probes
+	SkipHostDiscovery bool                // Skip host discovery
 }
 
 func ParseOptions() *Options {
@@ -58,6 +59,10 @@ func ParseOptions() *Options {
 		flagSet.StringVarP(&options.ExcludePorts, "ep", "exclude-ports", "", "ports to exclude from scan (comma-separated)"),
 		flagSet.StringVarP(&options.PortsFile, "pf", "ports-file", "", "list of ports to scan (file)"),
 		flagSet.BoolVar(&options.ChooseRandomPorts, "rp", false, "Choose random ports"),
+	)
+
+	flagSet.CreateGroup("host-discovery", "Host-Discovery",
+		flagSet.BoolVarP(&options.SkipHostDiscovery, "skip-host-discovery", "Pn", false, "treat all hosts as online -- skip host discovery"),
 	)
 
 	flagSet.CreateGroup("rate-limit", "Rate-limit",

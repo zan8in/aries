@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/zan8in/aries/pkg/port"
 	"github.com/zan8in/aries/pkg/result"
@@ -64,11 +65,12 @@ func (r *Runner) WriteOutput(scanResults *result.Result) {
 	}
 
 	var (
-		file     *os.File
-		output   string
-		err      error
-		fileType uint8
-		csvutil  *csv.Writer
+		file          *os.File
+		fileDsicovery *os.File
+		output        string
+		err           error
+		fileType      uint8
+		csvutil       *csv.Writer
 	)
 
 	output = r.options.Output
@@ -81,6 +83,7 @@ func (r *Runner) WriteOutput(scanResults *result.Result) {
 		} else {
 			output = "output-" + dateutil.GetTimeFormat() + ".csv"
 		}
+		output = strings.ReplaceAll(output, "/", "-")
 	}
 
 	fileType = fileutil.FileExt(output)
@@ -111,8 +114,7 @@ func (r *Runner) WriteOutput(scanResults *result.Result) {
 		csvutil.Write([]string{"Host", "IP", "PORT", "Protocol", "Product"})
 	}
 
-	switch {
-	case scanResults.HasIPsPorts():
+	if scanResults.HasIPsPorts() {
 		for hostResult := range scanResults.GetIPsPorts() {
 			dt, err := r.scanner.IPRanger.GetHostsByIP(hostResult.IP)
 			if err != nil {
@@ -147,6 +149,24 @@ func (r *Runner) WriteOutput(scanResults *result.Result) {
 			case fileutil.FILE_CSV:
 				csvutil.Flush()
 			}
+		}
+	}
+
+	if len(scanResults.GetDiscoveryIPs()) > 0 {
+		fmt.Println(len(scanResults.GetDiscoveryIPs()))
+		fmt.Println(len(r.scanner.ScanResults.GetDiscoveryIPs()))
+		output = "HostDiscovery-" + output
+		output = strings.ReplaceAll(output, ".csv", ".txt")
+		output = strings.ReplaceAll(output, ".json", ".txt")
+		fileDsicovery, err = os.Create(output)
+		if err != nil {
+			gologger.Error().Msgf("Could not create file %s: %s\n", output, err)
+			return
+		}
+		defer fileDsicovery.Close()
+
+		for ip := range scanResults.GetDiscoveryIPs() {
+			fileutil.BufferWriteAppend(fileDsicovery, ip+"\n")
 		}
 	}
 

@@ -1,6 +1,8 @@
 package aries
 
 import (
+	"bufio"
+	"fmt"
 	"math/rand"
 	"net"
 	"os"
@@ -27,7 +29,9 @@ type Runner struct {
 	ticker *time.Ticker
 	wgscan sizedwaitgroup.SizedWaitGroup
 
-	hostChan chan *net.IPNet
+	hostChan          chan *net.IPNet
+	hostDiscoveryChan chan *net.IPNet
+	hostStrChan       chan string
 
 	tempHostFile string
 
@@ -40,6 +44,8 @@ func NewRunner(options *Options) (*Runner, error) {
 		options: options,
 	}
 	runner.hostChan = make(chan *net.IPNet)
+	runner.hostDiscoveryChan = make(chan *net.IPNet)
+	runner.hostStrChan = make(chan string)
 
 	scanner, err := scan.NewScanner(&scan.OptionsScanner{
 		Timeout: time.Duration(options.Timeout) * time.Millisecond,
@@ -105,11 +111,49 @@ func (runner *Runner) start() {
 		dateutil.GetNowFullDateTime(),
 	)
 
-	for cidr := range runner.hostChan {
-		ipStream, _ := mapcidr.IPAddressesAsStream(cidr.String())
-		for ip := range ipStream {
-			go atomic.AddInt32(&runner.HostCount, 1)
+	// Host Discovery & Port Scan
+	if !runner.options.SkipHostDiscovery {
+		tempHosts, err := os.CreateTemp("", "aries-temp-discovery-hosts-*")
+		if err != nil {
+			return
+		}
+		defer tempHosts.Close()
 
+		gologger.Print().Msg("Running Host Discovery")
+
+		for cidr := range runner.hostDiscoveryChan {
+			ipStream, _ := mapcidr.IPAddressesAsStream(cidr.String())
+			for ip := range ipStream {
+				runner.wgscan.Add()
+
+				go func(ip string) {
+					<-runner.ticker.C
+					defer runner.wgscan.Done()
+
+					disIp := scan.DiscoveredHost(ip)
+					if len(disIp) > 0 {
+						go atomic.AddInt32(&runner.HostCount, 1)
+						fmt.Fprintf(tempHosts, "%s\n", disIp)
+					}
+				}(ip)
+			}
+		}
+		runner.wgscan.Wait()
+
+		if runner.HostCount == 0 {
+			gologger.Print().Msg("\"-Pn\" treat all hosts as online -- skip host discovery")
+		}
+
+		f, err := os.Open(tempHosts.Name())
+		if err != nil {
+			return
+		}
+		defer f.Close()
+
+		s := bufio.NewScanner(f)
+		for s.Scan() {
+			ip := s.Text()
+			runner.scanner.ScanResults.AddDiscoveryIp(ip)
 			for _, port := range runner.scanner.Ports {
 				if runner.scanner.ScanResults.HasSkipped(ip) {
 					continue
@@ -122,9 +166,33 @@ func (runner *Runner) start() {
 					go runner.connectScan(ip, port)
 				}
 			}
-
 		}
 	}
+
+	// Skip Host Discovery
+	if runner.options.SkipHostDiscovery {
+		for cidr := range runner.hostChan {
+			ipStream, _ := mapcidr.IPAddressesAsStream(cidr.String())
+			for ip := range ipStream {
+				go atomic.AddInt32(&runner.HostCount, 1)
+
+				for _, port := range runner.scanner.Ports {
+					if runner.scanner.ScanResults.HasSkipped(ip) {
+						continue
+					}
+					if isSynScanType {
+						runner.scanner.Phase.Set(scan.Scan)
+						runner.handleHostPortSyn(ip, port)
+					} else {
+						runner.wgscan.Add()
+						go runner.connectScan(ip, port)
+					}
+				}
+
+			}
+		}
+	}
+
 	runner.wgscan.Wait()
 
 	runner.scanner.Phase.Set(scan.Done)
