@@ -76,8 +76,10 @@ func (r *Runner) WriteOutput(scanResults *result.Result) {
 	if len(r.options.Output) == 0 {
 		if len(r.options.Host) > 0 {
 			output = r.options.Host[0] + ".csv"
-		} else if len(r.options.PortsFile) > 0 {
-			output = r.options.HostsFile + ".csv"
+		} else if len(r.options.HostsFile) > 0 {
+			output = fileutil.GetFilename(r.options.HostsFile) + ".csv"
+		} else {
+			output = "output-" + dateutil.GetTimeFormat() + ".csv"
 		}
 	}
 

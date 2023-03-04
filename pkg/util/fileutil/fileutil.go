@@ -479,6 +479,11 @@ func FileExt(filename string) FileType {
 	}
 }
 
+func GetFilename(srcFile string) string {
+	ftype := path.Ext(srcFile)
+	return strings.TrimSuffix(path.Base(srcFile), ftype)
+}
+
 func BufferWriteAppend(file *os.File, content string) error {
 	buf := bufio.NewWriter(file)
 	buf.WriteString(content)
