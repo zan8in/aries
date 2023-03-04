@@ -37,7 +37,7 @@ func (r *Runner) handleOutput(scanResults *result.Result) {
 					hostname = hostResult.IP
 				}
 				gologger.Print().Msgf(
-					"› Found %d ports on host %s (%s)\n",
+					"Found %d ports on host %s (%s)\n",
 					len(hostResult.Ports),
 					hostname,
 					hostResult.IP,
@@ -150,6 +150,7 @@ func (r *Runner) WriteOutput(scanResults *result.Result) {
 				csvutil.Flush()
 			}
 		}
+		gologger.Print().Msgf("generate scan result report \"%s\"\n", output)
 	}
 
 	if len(scanResults.GetDiscoveryIPs()) > 0 {
@@ -168,6 +169,7 @@ func (r *Runner) WriteOutput(scanResults *result.Result) {
 		for ip := range scanResults.GetDiscoveryIPs() {
 			fileutil.BufferWriteAppend(fileDsicovery, ip+"\n")
 		}
+		gologger.Print().Msgf("generate host discovery result report \"%s\"\n", output)
 	}
 
 }

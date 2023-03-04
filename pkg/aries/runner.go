@@ -260,7 +260,7 @@ func (r *Runner) NmapServiceProbes() {
 		return
 	}
 
-	gologger.Print().Msg("Starting Nmap Service Probes...")
+	gologger.Print().Msg("Running Nmap Service Probes")
 
 	var swg sync.WaitGroup
 	limiter := time.NewTicker(time.Second / time.Duration(r.options.RateLimit))
