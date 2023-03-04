@@ -51,11 +51,6 @@ cat ./ports.txt
 80,443,1433,8000-8100
 ```
 
-Nmap Service Probes
-```
-aries -t 192.168.88.1/24 -A
-```
-
 Port Range
 ```
 aries -t 192.168.88.168 -p 80,443,8000-8100
