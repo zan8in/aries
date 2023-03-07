@@ -153,9 +153,8 @@ func (r *Runner) WriteOutput() {
 	}
 
 	if r.scanner.ScanResults.HasDiscoveryIPS() {
-		output = "HostDiscovery-" + output
-		output = strings.ReplaceAll(output, ".csv", ".txt")
-		output = strings.ReplaceAll(output, ".json", ".txt")
+		output = strings.ReplaceAll(output, ".csv", "-host-discovery.txt")
+		output = strings.ReplaceAll(output, ".json", "-host-discovery.txt")
 		fileDsicovery, err = os.Create(output)
 		if err != nil {
 			gologger.Error().Msgf("Could not create file %s: %s\n", output, err)
