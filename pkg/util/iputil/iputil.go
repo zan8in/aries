@@ -229,3 +229,22 @@ func GetBindableAddress(port int, ips ...string) (string, error) {
 
 	return "", errs
 }
+
+func GetDomainIPs(target string) ([]string, error) {
+	var (
+		err    error
+		result []string
+	)
+	ips, err := net.LookupIP(target)
+	if err != nil {
+		if addr, err := net.ResolveIPAddr("ip", target); err == nil {
+			result = append(result, addr.IP.String())
+			return result, err
+		}
+		return result, err
+	}
+	for _, ip := range ips {
+		result = append(result, ip.To4().String())
+	}
+	return result, nil
+}

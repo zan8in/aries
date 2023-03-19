@@ -144,7 +144,7 @@ func (runner *Runner) addTarget(target string) error {
 
 func (r *Runner) resolveFQDN(target string) ([]string, error) {
 	// ipsV4, ipsV6, err := r.host2ips(target)
-	addrs, err := net.LookupHost(target)
+	addrs, err := iputil.GetDomainIPs(target)
 	if err != nil {
 		return []string{}, err
 	}

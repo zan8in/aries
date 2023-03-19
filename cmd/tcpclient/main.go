@@ -12,6 +12,7 @@ import (
 
 	"github.com/remeh/sizedwaitgroup"
 	"github.com/zan8in/aries/pkg/scan"
+	"github.com/zan8in/aries/pkg/util/iputil"
 )
 
 func query(i string) {
@@ -27,6 +28,11 @@ func query(i string) {
 }
 
 func main() {
+	a, err := iputil.GetDomainIPs("baidu.com")
+	fmt.Println(a, err)
+}
+
+func main2() {
 	var addr []string
 	for i := 1; i <= 255; i++ {
 		addr = append(addr, "192.168.66."+strconv.Itoa(i))
