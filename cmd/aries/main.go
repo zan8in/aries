@@ -19,4 +19,6 @@ func main() {
 		gologger.Fatal().Msg(err.Error())
 	}
 
+	runner.Start()
+
 }

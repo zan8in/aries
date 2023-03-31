@@ -87,8 +87,6 @@ func (runner *Runner) Run() error {
 
 	go runner.PreprocessingHosts()
 
-	runner.start()
-
 	return nil
 }
 
@@ -96,7 +94,7 @@ func (r *Runner) BackgroundWorkers() {
 	r.scanner.StartWorkers()
 }
 
-func (runner *Runner) start() {
+func (runner *Runner) Start() {
 	rand.Seed(time.Now().UnixNano())
 
 	starttime := time.Now()
