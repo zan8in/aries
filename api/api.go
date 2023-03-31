@@ -2,6 +2,8 @@ package api
 
 import (
 	"github.com/zan8in/aries/pkg/aries"
+	"github.com/zan8in/gologger"
+	"github.com/zan8in/gologger/levels"
 )
 
 type Result struct {
@@ -13,6 +15,7 @@ type Result struct {
 }
 
 func PortScanner(host, top string, limit int) ([]Result, error) {
+	gologger.DefaultLogger.SetMaxLevel(levels.LevelFatal)
 	var result []Result
 	var err error
 
