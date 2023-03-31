@@ -2,29 +2,65 @@ package api
 
 import (
 	"github.com/zan8in/aries/pkg/aries"
-	"github.com/zan8in/gologger"
 )
 
-func PortScanner(host string, limit int) {
+type Result struct {
+	Host    string
+	IP      string
+	Port    int
+	Service string
+	Product string
+}
+
+func PortScanner(host, top string, limit int) ([]Result, error) {
+	var result []Result
+	var err error
+
+	if len(top) == 0 {
+		top = "100"
+	}
 	options := aries.NewOptions(aries.Options{
 		Host:              []string{host},
 		RateLimit:         limit,
 		SkipHostDiscovery: true,
-		TopPorts:          "100",
+		TopPorts:          top,
 		Retries:           aries.DefaultRetriesSynScan,
 		Timeout:           aries.DefaultPortTimeoutSynScan,
 	})
 
 	runner, err := aries.NewRunner(options)
 	if err != nil {
-		gologger.Fatal().Msg(err.Error())
+		return result, err
 	}
 
-	err = runner.Run()
-	if err != nil {
-		gologger.Fatal().Msg(err.Error())
+	if err = runner.Run(); err != nil {
+		return result, err
 	}
 
 	runner.StartApi()
 
+	runner.NmapServiceProbes()
+
+	switch {
+	case runner.Scanner.ScanResults.HasIPsPorts():
+		for hostResult := range runner.Scanner.ScanResults.GetIPsPorts() {
+			dt, err := runner.Scanner.IPRanger.GetHostsByIP(hostResult.IP)
+			if err != nil {
+				continue
+			}
+			for _, host := range dt {
+				hostname := host
+				if host == "ip" {
+					hostname = hostResult.IP
+				}
+
+				for _, p := range hostResult.Ports {
+					result = append(result, Result{Host: hostname, IP: hostResult.IP, Port: p.Port, Service: p.Service, Product: p.ProbeProduct})
+				}
+
+			}
+		}
+	}
+
+	return result, nil
 }

@@ -24,9 +24,9 @@ type OutputResult struct {
 
 func (r *Runner) handleOutput() {
 	switch {
-	case r.scanner.ScanResults.HasIPsPorts():
-		for hostResult := range r.scanner.ScanResults.GetIPsPorts() {
-			dt, err := r.scanner.IPRanger.GetHostsByIP(hostResult.IP)
+	case r.Scanner.ScanResults.HasIPsPorts():
+		for hostResult := range r.Scanner.ScanResults.GetIPsPorts() {
+			dt, err := r.Scanner.IPRanger.GetHostsByIP(hostResult.IP)
 			if err != nil {
 				continue
 			}
@@ -59,7 +59,7 @@ func (r *Runner) handleOutput() {
 
 func (r *Runner) WriteOutput() {
 
-	if r.scanner.ScanResults.IsEmpty() {
+	if r.Scanner.ScanResults.IsEmpty() {
 		return
 	}
 
@@ -113,9 +113,9 @@ func (r *Runner) WriteOutput() {
 		csvutil.Write([]string{"Host", "IP", "PORT", "Protocol", "Product"})
 	}
 
-	if r.scanner.ScanResults.HasIPsPorts() {
-		for hostResult := range r.scanner.ScanResults.GetIPsPorts() {
-			dt, err := r.scanner.IPRanger.GetHostsByIP(hostResult.IP)
+	if r.Scanner.ScanResults.HasIPsPorts() {
+		for hostResult := range r.Scanner.ScanResults.GetIPsPorts() {
+			dt, err := r.Scanner.IPRanger.GetHostsByIP(hostResult.IP)
 			if err != nil {
 				continue
 			}
@@ -152,7 +152,7 @@ func (r *Runner) WriteOutput() {
 		gologger.Print().Msgf("generate scan result report \"%s\"\n", output)
 	}
 
-	if r.scanner.ScanResults.HasDiscoveryIPS() {
+	if r.Scanner.ScanResults.HasDiscoveryIPS() {
 		output = strings.ReplaceAll(output, ".csv", "-host-discovery.txt")
 		output = strings.ReplaceAll(output, ".json", "-host-discovery.txt")
 		fileDsicovery, err = os.Create(output)
@@ -162,7 +162,7 @@ func (r *Runner) WriteOutput() {
 		}
 		defer fileDsicovery.Close()
 
-		for ip := range r.scanner.ScanResults.GetDiscoveryIPs() {
+		for ip := range r.Scanner.ScanResults.GetDiscoveryIPs() {
 			fileutil.BufferWriteAppend(fileDsicovery, ip+"\n")
 		}
 		gologger.Print().Msgf("generate host discovery result report \"%s\"\n", output)

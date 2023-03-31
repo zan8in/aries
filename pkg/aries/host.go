@@ -93,7 +93,7 @@ func (runner *Runner) addTarget(target string) error {
 		} else {
 			runner.hostDiscoveryChan <- iputil.ToCidr(target)
 		}
-		if err := runner.scanner.IPRanger.AddHostWithMetadata(target, "cidr"); err != nil { // Add cidr directly to ranger, as single ips would allocate more resources later
+		if err := runner.Scanner.IPRanger.AddHostWithMetadata(target, "cidr"); err != nil { // Add cidr directly to ranger, as single ips would allocate more resources later
 			gologger.Warning().Msgf("%s\n", err)
 		}
 
@@ -112,7 +112,7 @@ func (runner *Runner) addTarget(target string) error {
 			runner.hostDiscoveryChan <- iputil.ToCidr(target)
 		}
 
-		err := runner.scanner.IPRanger.AddHostWithMetadata(target, "ip")
+		err := runner.Scanner.IPRanger.AddHostWithMetadata(target, "ip")
 		if err != nil {
 			gologger.Warning().Msgf("%s\n", err)
 		}
@@ -134,7 +134,7 @@ func (runner *Runner) addTarget(target string) error {
 			runner.hostDiscoveryChan <- iputil.ToCidr(ip)
 		}
 
-		if err := runner.scanner.IPRanger.AddHostWithMetadata(ip, target); err != nil {
+		if err := runner.Scanner.IPRanger.AddHostWithMetadata(ip, target); err != nil {
 			gologger.Warning().Msgf("%s\n", err)
 		}
 	}

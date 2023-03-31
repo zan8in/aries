@@ -25,11 +25,11 @@ func (runner *Runner) StartApi() {
 			for ip := range ipStream {
 				go atomic.AddInt32(&runner.HostCount, 1)
 
-				for _, port := range runner.scanner.Ports {
-					if runner.scanner.ScanResults.HasSkipped(ip) {
+				for _, port := range runner.Scanner.Ports {
+					if runner.Scanner.ScanResults.HasSkipped(ip) {
 						continue
 					}
-					runner.scanner.Phase.Set(scan.Scan)
+					runner.Scanner.Phase.Set(scan.Scan)
 					if isSynScanType {
 						runner.handleHostPortSyn(ip, port)
 					} else {

@@ -24,7 +24,7 @@ import (
 
 type Runner struct {
 	options *Options
-	scanner *scan.Scanner
+	Scanner *scan.Scanner
 
 	ticker *time.Ticker
 	wgscan sizedwaitgroup.SizedWaitGroup
@@ -57,15 +57,15 @@ func NewRunner(options *Options) (*Runner, error) {
 	if err != nil {
 		return runner, err
 	}
-	runner.scanner = scanner
+	runner.Scanner = scanner
 
-	runner.scanner.Ports, err = ParsePorts(options)
+	runner.Scanner.Ports, err = ParsePorts(options)
 	if err != nil {
 		return runner, err
 	}
 
 	if runner.options.ChooseRandomPorts {
-		sliceutil.RandSlice(runner.scanner.Ports)
+		sliceutil.RandSlice(runner.Scanner.Ports)
 	}
 
 	runner.wgscan = sizedwaitgroup.New(runner.options.RateLimit)
@@ -78,7 +78,7 @@ func (runner *Runner) Run() error {
 	defer runner.Close()
 
 	if privileges.IsPrivileged && runner.options.ScanType == SynScan {
-		err := runner.scanner.SetupHandlers()
+		err := runner.Scanner.SetupHandlers()
 		if err != nil {
 			return err
 		}
@@ -91,7 +91,7 @@ func (runner *Runner) Run() error {
 }
 
 func (r *Runner) BackgroundWorkers() {
-	r.scanner.StartWorkers()
+	r.Scanner.StartWorkers()
 }
 
 func (runner *Runner) Start() {
@@ -131,7 +131,7 @@ func (runner *Runner) Start() {
 					disIp := scan.DiscoveredHost(ip)
 					if len(disIp) > 0 {
 						go atomic.AddInt32(&runner.HostCount, 1)
-						runner.scanner.ScanResults.AddDiscoveryIp(ip)
+						runner.Scanner.ScanResults.AddDiscoveryIp(ip)
 						fmt.Fprintf(tempHosts, "%s\n", disIp)
 					}
 				}(ip)
@@ -153,11 +153,11 @@ func (runner *Runner) Start() {
 		for s.Scan() {
 			ip := s.Text()
 
-			for _, port := range runner.scanner.Ports {
-				if runner.scanner.ScanResults.HasSkipped(ip) {
+			for _, port := range runner.Scanner.Ports {
+				if runner.Scanner.ScanResults.HasSkipped(ip) {
 					continue
 				}
-				runner.scanner.Phase.Set(scan.Scan)
+				runner.Scanner.Phase.Set(scan.Scan)
 				if isSynScanType {
 					runner.handleHostPortSyn(ip, port)
 				} else {
@@ -175,11 +175,11 @@ func (runner *Runner) Start() {
 			for ip := range ipStream {
 				go atomic.AddInt32(&runner.HostCount, 1)
 
-				for _, port := range runner.scanner.Ports {
-					if runner.scanner.ScanResults.HasSkipped(ip) {
+				for _, port := range runner.Scanner.Ports {
+					if runner.Scanner.ScanResults.HasSkipped(ip) {
 						continue
 					}
-					runner.scanner.Phase.Set(scan.Scan)
+					runner.Scanner.Phase.Set(scan.Scan)
 					if isSynScanType {
 						runner.handleHostPortSyn(ip, port)
 					} else {
@@ -194,7 +194,7 @@ func (runner *Runner) Start() {
 
 	runner.wgscan.Wait()
 
-	runner.scanner.Phase.Set(scan.Done)
+	runner.Scanner.Phase.Set(scan.Done)
 
 	runner.NmapServiceProbes()
 
@@ -204,7 +204,7 @@ func (runner *Runner) Start() {
 
 	gologger.Print().Msgf("%d IP addresses (Found %d hosts %d ports up) scanned in %s. Aries finished at %s\n",
 		runner.HostCount,
-		runner.scanner.ScanResults.Len(),
+		runner.Scanner.ScanResults.Len(),
 		runner.portCount(),
 		strings.Split(time.Since(starttime).String(), ".")[0]+"s",
 		dateutil.GetNowFullDateTime(),
@@ -213,33 +213,33 @@ func (runner *Runner) Start() {
 
 func (r *Runner) portCount() int32 {
 	if r.options.isSynScan() {
-		return r.scanner.PortCount
+		return r.Scanner.PortCount
 	}
 	return r.PortCount
 }
 
 func (r *Runner) handleHostPortSyn(ip string, p *port.Port) {
 	<-r.ticker.C
-	r.scanner.EnqueueTCP(ip, scan.Syn, p)
+	r.Scanner.EnqueueTCP(ip, scan.Syn, p)
 }
 
 func (runner *Runner) connectScan(host string, port *port.Port) {
 	defer runner.wgscan.Done()
 
-	if runner.scanner.ScanResults.IPHasPort(host, port) {
+	if runner.Scanner.ScanResults.IPHasPort(host, port) {
 		return
 	}
 
 	<-runner.ticker.C
 
-	open, err := runner.scanner.ConnectPort(host, port, time.Duration(runner.options.Timeout)*time.Millisecond)
+	open, err := runner.Scanner.ConnectPort(host, port, time.Duration(runner.options.Timeout)*time.Millisecond)
 	if open && err == nil {
 		if isWindows() && (port.Port == 110 || port.Port == 25) {
 			return
 		}
 		gologger.Print().Msgf("Discovered open port %d/%s on %s\n", port.Port, port.Protocol, host)
 
-		runner.scanner.ScanResults.AddPort(host, port)
+		runner.Scanner.ScanResults.AddPort(host, port)
 
 		go atomic.AddInt32(&runner.PortCount, 1)
 	}
@@ -252,10 +252,10 @@ func (runner *Runner) Close() {
 
 func (r *Runner) NmapServiceProbes() {
 
-	r.scanner.Phase.Set(scan.Scan)
-	defer r.scanner.Phase.Set(scan.Done)
+	r.Scanner.Phase.Set(scan.Scan)
+	defer r.Scanner.Phase.Set(scan.Done)
 
-	if r.scanner.ScanResults.Len() == 0 {
+	if r.Scanner.ScanResults.Len() == 0 {
 		return
 	}
 
@@ -265,22 +265,22 @@ func (r *Runner) NmapServiceProbes() {
 	limiter := time.NewTicker(time.Second / time.Duration(r.options.RateLimit))
 
 	verifiedResult := result.NewResult()
-	verifiedResult.SetDiscoveryIPS(r.scanner.ScanResults.GetDiscoveryIPs())
+	verifiedResult.SetDiscoveryIPS(r.Scanner.ScanResults.GetDiscoveryIPs())
 
-	for hostResult := range r.scanner.ScanResults.GetIPsPorts() {
+	for hostResult := range r.Scanner.ScanResults.GetIPsPorts() {
 		<-limiter.C
 		swg.Add(1)
 
 		go func(hostResult *result.HostResult) {
 			defer swg.Done()
 
-			results := r.scanner.NmapServiceProbesScan(hostResult.IP, hostResult.Ports)
+			results := r.Scanner.NmapServiceProbesScan(hostResult.IP, hostResult.Ports)
 			verifiedResult.SetPorts(hostResult.IP, results)
 
 		}(hostResult)
 	}
 
-	r.scanner.ScanResults = verifiedResult
+	r.Scanner.ScanResults = verifiedResult
 
 	swg.Wait()
 }
