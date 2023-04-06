@@ -22,6 +22,8 @@ import (
 	"github.com/zan8in/gologger"
 )
 
+type OnResultCallback func(r Result)
+
 type Runner struct {
 	options *Options
 	Scanner *scan.Scanner
@@ -37,6 +39,16 @@ type Runner struct {
 
 	HostCount int32
 	PortCount int32
+
+	OnResult OnResultCallback
+}
+
+type Result struct {
+	Host    string
+	IP      string
+	Port    int
+	Service string
+	Product string
 }
 
 func NewRunner(options *Options) (*Runner, error) {
@@ -153,6 +165,11 @@ func (runner *Runner) Start() {
 		for s.Scan() {
 			ip := s.Text()
 
+			host := ip
+			if dt, err := runner.Scanner.IPRanger.GetHostsByIP(ip); err == nil && len(dt) > 0 {
+				host = dt[0]
+			}
+
 			for _, port := range runner.Scanner.Ports {
 				if runner.Scanner.ScanResults.HasSkipped(ip) {
 					continue
@@ -162,7 +179,7 @@ func (runner *Runner) Start() {
 					runner.handleHostPortSyn(ip, port)
 				} else {
 					runner.wgscan.Add()
-					go runner.connectScan(ip, port)
+					go runner.connectScan(host, ip, port)
 				}
 			}
 		}
@@ -175,6 +192,11 @@ func (runner *Runner) Start() {
 			for ip := range ipStream {
 				go atomic.AddInt32(&runner.HostCount, 1)
 
+				host := ip
+				if dt, err := runner.Scanner.IPRanger.GetHostsByIP(ip); err == nil && len(dt) > 0 {
+					host = dt[0]
+				}
+
 				for _, port := range runner.Scanner.Ports {
 					if runner.Scanner.ScanResults.HasSkipped(ip) {
 						continue
@@ -184,7 +206,7 @@ func (runner *Runner) Start() {
 						runner.handleHostPortSyn(ip, port)
 					} else {
 						runner.wgscan.Add()
-						go runner.connectScan(ip, port)
+						go runner.connectScan(host, ip, port)
 					}
 				}
 
@@ -223,23 +245,25 @@ func (r *Runner) handleHostPortSyn(ip string, p *port.Port) {
 	r.Scanner.EnqueueTCP(ip, scan.Syn, p)
 }
 
-func (runner *Runner) connectScan(host string, port *port.Port) {
+func (runner *Runner) connectScan(host, ip string, port *port.Port) {
 	defer runner.wgscan.Done()
 
-	if runner.Scanner.ScanResults.IPHasPort(host, port) {
+	if runner.Scanner.ScanResults.IPHasPort(ip, port) {
 		return
 	}
 
 	<-runner.ticker.C
 
-	open, err := runner.Scanner.ConnectPort(host, port, time.Duration(runner.options.Timeout)*time.Millisecond)
+	open, err := runner.Scanner.ConnectPort(ip, port, time.Duration(runner.options.Timeout)*time.Millisecond)
 	if open && err == nil {
 		if isWindows() && (port.Port == 110 || port.Port == 25) {
 			return
 		}
-		gologger.Print().Msgf("Discovered open port %d/%s on %s\n", port.Port, port.Protocol, host)
+		// gologger.Print().Msgf("Discovered open port %d/%s on %s(%s)\n", port.Port, port.Protocol, host, ip)
 
-		runner.Scanner.ScanResults.AddPort(host, port)
+		runner.Scanner.ScanResults.AddPort(ip, port)
+
+		runner.OnResult(Result{Host: host, IP: ip, Port: port.Port})
 
 		go atomic.AddInt32(&runner.PortCount, 1)
 	}

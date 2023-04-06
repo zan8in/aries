@@ -123,7 +123,7 @@ func (options *Options) validateOptions() (err error) {
 		return errors.Wrap(errZeroValue, "rate")
 	} else if options.RateLimit == DefaultRateSynScan {
 		// options.RateLimit = DefaultRateConnectScan
-		options.autoChangeRateLimit()
+		options.AutoChangeRateLimit()
 	}
 
 	if !privileges.IsPrivileged && options.Retries == DefaultRetriesSynScan {
@@ -149,7 +149,7 @@ func (options *Options) validateOptions() (err error) {
 	return err
 }
 
-func (options *Options) autoChangeRateLimit() {
+func (options *Options) AutoChangeRateLimit() {
 	NumCPU := runtime.NumCPU()
 	options.RateLimit = NumCPU * 50
 

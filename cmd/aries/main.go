@@ -14,6 +14,10 @@ func main() {
 		gologger.Fatal().Msg(err.Error())
 	}
 
+	runner.OnResult = func(r aries.Result) {
+		gologger.Print().Msgf("Discovered open port %d on (%s) %s\n", r.Port, r.Host, r.IP)
+	}
+
 	err = runner.Run()
 	if err != nil {
 		gologger.Fatal().Msg(err.Error())

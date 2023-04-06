@@ -87,3 +87,7 @@ func (s *Scanner) NmapServiceProbesScan(host string, ports []*port.Port) []*port
 
 	return verifiedPorts
 }
+
+func ServiceScan(ip string, port int) (string, string, string) {
+	return vscan.Vs.Check("tcp", ip, port)
+}

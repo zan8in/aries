@@ -1,7 +1,9 @@
 package api
 
 import (
+	"github.com/remeh/sizedwaitgroup"
 	"github.com/zan8in/aries/pkg/aries"
+	"github.com/zan8in/aries/pkg/scan"
 	"github.com/zan8in/gologger"
 	"github.com/zan8in/gologger/levels"
 )
@@ -14,7 +16,11 @@ type Result struct {
 	Product string
 }
 
-func PortScanner(host, top string, limit int) ([]Result, error) {
+type OnResultCallback func(r Result)
+
+var OnResult OnResultCallback
+
+func PortScanner(targets []string, top string, limit int) ([]Result, error) {
 	gologger.DefaultLogger.SetMaxLevel(levels.LevelFatal)
 	var result []Result
 	var err error
@@ -22,8 +28,9 @@ func PortScanner(host, top string, limit int) ([]Result, error) {
 	if len(top) == 0 {
 		top = "100"
 	}
+
 	options := aries.NewOptions(aries.Options{
-		Host:              []string{host},
+		Host:              targets,
 		RateLimit:         limit,
 		SkipHostDiscovery: true,
 		TopPorts:          top,
@@ -31,9 +38,26 @@ func PortScanner(host, top string, limit int) ([]Result, error) {
 		Timeout:           aries.DefaultPortTimeoutSynScan,
 	})
 
+	if limit == 0 {
+		options.AutoChangeRateLimit()
+	}
+
 	runner, err := aries.NewRunner(options)
 	if err != nil {
 		return result, err
+	}
+
+	swg := sizedwaitgroup.New(10)
+	runner.OnResult = func(r aries.Result) {
+		swg.Add()
+		rst := Result{Host: r.Host, Port: r.Port, IP: r.IP}
+		go func(rst Result) {
+			defer swg.Done()
+			service, probeProduct, _ := scan.ServiceScan(rst.IP, rst.Port)
+			rst.Service = service
+			rst.Product = probeProduct
+			OnResult(rst)
+		}(rst)
 	}
 
 	if err = runner.Run(); err != nil {
@@ -42,28 +66,7 @@ func PortScanner(host, top string, limit int) ([]Result, error) {
 
 	runner.StartApi()
 
-	runner.NmapServiceProbes()
-
-	switch {
-	case runner.Scanner.ScanResults.HasIPsPorts():
-		for hostResult := range runner.Scanner.ScanResults.GetIPsPorts() {
-			dt, err := runner.Scanner.IPRanger.GetHostsByIP(hostResult.IP)
-			if err != nil {
-				continue
-			}
-			for _, host := range dt {
-				hostname := host
-				if host == "ip" {
-					hostname = hostResult.IP
-				}
-
-				for _, p := range hostResult.Ports {
-					result = append(result, Result{Host: hostname, IP: hostResult.IP, Port: p.Port, Service: p.Service, Product: p.ProbeProduct})
-				}
-
-			}
-		}
-	}
+	swg.Wait()
 
 	return result, nil
 }

@@ -18,12 +18,16 @@ func (runner *Runner) StartApi() {
 
 	isSynScanType := runner.options.isSynScan()
 
-	// Skip Host Discovery
 	if runner.options.SkipHostDiscovery {
 		for cidr := range runner.hostChan {
 			ipStream, _ := mapcidr.IPAddressesAsStream(cidr.String())
 			for ip := range ipStream {
 				go atomic.AddInt32(&runner.HostCount, 1)
+
+				host := ip
+				if dt, err := runner.Scanner.IPRanger.GetHostsByIP(ip); err == nil && len(dt) > 0 {
+					host = dt[0]
+				}
 
 				for _, port := range runner.Scanner.Ports {
 					if runner.Scanner.ScanResults.HasSkipped(ip) {
@@ -34,7 +38,7 @@ func (runner *Runner) StartApi() {
 						runner.handleHostPortSyn(ip, port)
 					} else {
 						runner.wgscan.Add()
-						go runner.connectScan(ip, port)
+						go runner.connectScan(host, ip, port)
 					}
 				}
 
