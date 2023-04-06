@@ -14,11 +14,16 @@ type Result struct {
 	Port    int
 	Service string
 	Product string
+	Status  int
 }
 
 type OnResultCallback func(r Result)
 
 var OnResult OnResultCallback
+
+var (
+	Done = -1
+)
 
 func PortScanner(targets []string, top string, limit int) ([]Result, error) {
 	gologger.DefaultLogger.SetMaxLevel(levels.LevelFatal)
@@ -67,6 +72,8 @@ func PortScanner(targets []string, top string, limit int) ([]Result, error) {
 	runner.StartApi()
 
 	swg.Wait()
+
+	OnResult(Result{Status: Done})
 
 	return result, nil
 }

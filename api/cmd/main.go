@@ -9,7 +9,7 @@ import (
 func main() {
 
 	api.OnResult = func(r api.Result) {
-		fmt.Printf("Discovered open port %d on (%s) %s service:%s, product:%s\n", r.Port, r.Host, r.IP, r.Service, r.Product)
+		fmt.Printf("!!Discovered open port %d on (%s) %s service:%s, product:%s\n", r.Port, r.Host, r.IP, r.Service, r.Product)
 	}
 
 	rst, err := api.PortScanner([]string{"example.com", "lankegp.com", "hackerone.com"}, "", 0)
