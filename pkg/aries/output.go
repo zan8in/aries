@@ -13,6 +13,7 @@ import (
 	"github.com/zan8in/aries/pkg/util/dateutil"
 	"github.com/zan8in/aries/pkg/util/fileutil"
 	"github.com/zan8in/gologger"
+	fileutil2 "github.com/zan8in/pins/file"
 )
 
 type OutputResult struct {
@@ -107,10 +108,13 @@ func (r *Runner) WriteOutput() {
 	}
 	defer file.Close()
 
-	if fileType == fileutil.FILE_CSV {
+	switch fileType {
+	case fileutil.FILE_CSV:
 		csvutil = csv.NewWriter(file)
 		file.WriteString("\xEF\xBB\xBF")
 		csvutil.Write([]string{"Host", "IP", "PORT", "Protocol", "Product"})
+	case fileutil.FILE_JSON:
+		fileutil.BufferWriteAppend(file, "[")
 	}
 
 	if r.Scanner.ScanResults.HasIPsPorts() {
@@ -149,6 +153,13 @@ func (r *Runner) WriteOutput() {
 				csvutil.Flush()
 			}
 		}
+
+		switch fileType {
+		case fileutil.FILE_JSON:
+			fileutil.BufferWriteAppend(file, "]")
+			fileutil2.CoverFile(output, ",]", "]")
+		}
+
 		gologger.Print().Msgf("generate scan result report \"%s\"\n", output)
 	}
 

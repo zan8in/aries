@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/akrylysov/pogreb v0.10.1
-	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d
+	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2
 	github.com/bits-and-blooms/bloom/v3 v3.3.1
 	github.com/cockroachdb/pebble v0.0.0-20221229212011-811a8c0e741b
 	github.com/google/gopacket v1.1.19
@@ -13,12 +13,13 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/remeh/sizedwaitgroup v1.0.0
 	github.com/rs/xid v1.4.0
-	github.com/stretchr/testify v1.8.1
+	github.com/stretchr/testify v1.8.2
 	github.com/syndtr/goleveldb v1.0.0
 	github.com/tidwall/buntdb v1.2.10
 	github.com/yl2chen/cidranger v1.0.2
 	github.com/zan8in/goflags v0.0.0-20230204144650-0745934af58a
 	github.com/zan8in/gologger v0.0.0-20220917062627-c34a83c0a373
+	github.com/zan8in/pins v0.0.0-20230414091613-7bfd343a7f2d
 	github.com/zan8in/stringsutil v0.0.0-20220917064022-03a0bd835142
 	go.etcd.io/bbolt v1.3.7
 	go.uber.org/multierr v1.9.0
@@ -38,6 +39,7 @@ require (
 	github.com/cockroachdb/redact v1.1.3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/getsentry/sentry-go v0.16.0 // indirect
+	github.com/go-errors/errors v1.4.2 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect

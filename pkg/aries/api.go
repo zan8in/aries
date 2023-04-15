@@ -47,4 +47,5 @@ func (runner *Runner) StartApi() {
 	}
 
 	runner.wgscan.Wait()
+	runner.OnResult(Result{})
 }
