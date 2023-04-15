@@ -1,20 +1,11 @@
 package aries
 
 import (
-	"fmt"
-
 	"github.com/zan8in/gologger"
 )
 
-var Version = "0.1.0"
-
-var banner = fmt.Sprintf(`
-┌─┐┬─┐┬┌─┐┌─┐
-├─┤├┬┘│├┤ └─┐
-┴ ┴┴└─┴└─┘└─┘ %s
-`, Version)
+var Version = "0.1.1"
 
 func ShowBanner() {
-	gologger.Print().Msgf("%s\n", banner)
-	gologger.Print().Msgf("\thttps://github.com/zan8in/aries\n\n")
+	gologger.Print().Msgf("\n|||\tA R I E S\t|||\t%s\n\n", Version)
 }
