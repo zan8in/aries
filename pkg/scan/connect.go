@@ -71,6 +71,21 @@ func (s *Scanner) NmapServiceProbesScan(host string, ports []*port.Port) []*port
 	var verifiedPorts []*port.Port
 
 	for _, p := range ports {
+		s, ptl := p.Service, p.Protocol2
+		if len(s) > 0 || len(ptl) > 0 {
+			pp := &port.Port{
+				Port:         p.Port,
+				Protocol:     p.Protocol,
+				TLS:          p.TLS,
+				Service:      s,
+				Protocol2:    ptl,
+				ProbeProduct: p.ProbeProduct,
+				Version:      "",
+			}
+			verifiedPorts = append(verifiedPorts, pp)
+
+			continue
+		}
 
 		service, probeProduct, version := vscan.Vs.Check("tcp", host, p.Port)
 		pp := &port.Port{

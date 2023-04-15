@@ -19,7 +19,7 @@ func main() {
 		}
 	}
 
-	rst, err := api.PortScanner([]string{"example.com"}, "", 0)
+	rst, err := api.PortScanner([]string{"hackerone.com"}, "", 0)
 	if err != nil {
 		fmt.Println(err.Error())
 		return

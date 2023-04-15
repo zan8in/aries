@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"net"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -20,6 +21,7 @@ import (
 	"github.com/zan8in/aries/pkg/util/mapcidr"
 	"github.com/zan8in/aries/pkg/util/sliceutil"
 	"github.com/zan8in/gologger"
+	iptuil "github.com/zan8in/pins/ip"
 )
 
 type OnResultCallback func(r Result)
@@ -44,11 +46,12 @@ type Runner struct {
 }
 
 type Result struct {
-	Host    string
-	IP      string
-	Port    int
-	Service string
-	Product string
+	Host     string
+	IP       string
+	Port     int
+	Protocol string
+	Service  string
+	Product  string
 }
 
 func NewRunner(options *Options) (*Runner, error) {
@@ -170,6 +173,8 @@ func (runner *Runner) Start() {
 				host = dt[0]
 			}
 
+			runner.Pavo(host, ip)
+
 			for _, port := range runner.Scanner.Ports {
 				if runner.Scanner.ScanResults.HasSkipped(ip) {
 					continue
@@ -196,6 +201,8 @@ func (runner *Runner) Start() {
 				if dt, err := runner.Scanner.IPRanger.GetHostsByIP(ip); err == nil && len(dt) > 0 {
 					host = dt[0]
 				}
+
+				runner.Pavo(host, ip)
 
 				for _, port := range runner.Scanner.Ports {
 					if runner.Scanner.ScanResults.HasSkipped(ip) {
@@ -233,6 +240,25 @@ func (runner *Runner) Start() {
 	)
 }
 
+func (runner *Runner) Pavo(host, ip string) {
+	if runner.Scanner.ScanResults.HasSkipped(ip) || iptuil.IsInternal(ip) {
+		return
+	}
+	if rst, err := runner.Scanner.PavoPortScan(ip, 1000); err == nil {
+		for _, r := range rst.Result {
+			rstport, _ := strconv.Atoi(r.Port)
+			pport := &port.Port{Port: rstport, Service: r.Server, Protocol2: r.Protocol}
+
+			if runner.Scanner.ScanResults.IPHasPort(ip, pport) {
+				continue
+			}
+
+			runner.Scanner.ScanResults.AddPort(ip, pport)
+			runner.OnResult(Result{Host: host, IP: ip, Port: rstport, Protocol: r.Protocol, Service: r.Server})
+		}
+	}
+}
+
 func (r *Runner) portCount() int32 {
 	if r.options.isSynScan() {
 		return r.Scanner.PortCount
@@ -246,6 +272,7 @@ func (r *Runner) handleHostPortSyn(ip string, p *port.Port) {
 }
 
 func (runner *Runner) connectScan(host, ip string, port *port.Port) {
+
 	defer runner.wgscan.Done()
 
 	if runner.Scanner.ScanResults.IPHasPort(ip, port) {

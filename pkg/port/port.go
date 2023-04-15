@@ -11,6 +11,7 @@ type Port struct {
 	Protocol     protocol.Protocol
 	TLS          bool
 	Service      string
+	Protocol2    string
 	ProbeProduct string
 	Version      string
 }

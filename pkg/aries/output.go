@@ -44,9 +44,10 @@ func (r *Runner) handleOutput() {
 				)
 				for _, p := range hostResult.Ports {
 					gologger.Silent().Msgf(
-						"%s:%d\t%s\t%s %s\n",
+						"%s:%d\t%s\t%s\t%s %s\n",
 						hostResult.IP,
 						p.Port,
+						p.Protocol2,
 						p.Service,
 						p.ProbeProduct,
 						p.Version,
@@ -112,7 +113,7 @@ func (r *Runner) WriteOutput() {
 	case fileutil.FILE_CSV:
 		csvutil = csv.NewWriter(file)
 		file.WriteString("\xEF\xBB\xBF")
-		csvutil.Write([]string{"Host", "IP", "PORT", "Protocol", "Product"})
+		csvutil.Write([]string{"Host", "IP", "PORT", "Protocol", "Service", "Product"})
 	case fileutil.FILE_JSON:
 		fileutil.BufferWriteAppend(file, "[")
 	}
@@ -209,6 +210,7 @@ func (or *OutputResult) CSV() []string {
 		host,
 		ip,
 		strconv.Itoa(or.Port.Port),
+		or.Port.Protocol2,
 		or.Port.Service,
 		or.Port.ProbeProduct + or.Port.Version,
 	}
