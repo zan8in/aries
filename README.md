@@ -7,6 +7,7 @@
 Aries  is a free and open-source network scanner. Nmap is used to discover hosts and services on a computer network by sending packets and analyzing the responses.
 
 ## Features
+- Get ports from **FOFA** 
 - **SYN/CONNECT** Scanning Mode
 - **Nmap Service Probes** (**experimental**)
 - Output format support `txt` `json` `csv`
