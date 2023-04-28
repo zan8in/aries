@@ -225,7 +225,9 @@ func (runner *Runner) Start() {
 
 	runner.Scanner.Phase.Set(scan.Done)
 
-	runner.NmapServiceProbes()
+	if runner.options.NmapServiceProbes {
+		runner.NmapServiceProbes()
+	}
 
 	runner.handleOutput()
 
@@ -268,6 +270,9 @@ func (r *Runner) portCount() int32 {
 
 func (r *Runner) handleHostPortSyn(ip string, p *port.Port) {
 	<-r.ticker.C
+	if r.Scanner.ScanResults.IPHasPort(ip, p) {
+		return
+	}
 	r.Scanner.EnqueueTCP(ip, scan.Syn, p)
 }
 

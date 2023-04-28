@@ -15,7 +15,7 @@ func main() {
 	}
 
 	runner.OnResult = func(r aries.Result) {
-		gologger.Print().Msgf("Discovered open port %d on (%s) %s %s %s\n", r.Port, r.Host, r.IP, r.Protocol, r.Service)
+		gologger.Print().Msgf("%s:%d\n", r.Host, r.Port)
 	}
 
 	err = runner.Run()
