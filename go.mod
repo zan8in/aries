@@ -19,7 +19,7 @@ require (
 	github.com/yl2chen/cidranger v1.0.2
 	github.com/zan8in/goflags v0.0.0-20230204144650-0745934af58a
 	github.com/zan8in/gologger v0.0.0-20220917062627-c34a83c0a373
-	github.com/zan8in/pavo v0.0.0-20230414054405-687df54c347c
+	github.com/zan8in/pavo v0.0.0-20230518131659-d2204b6d9ea7
 	github.com/zan8in/pins v0.0.0-20230415064757-40257618b466
 	github.com/zan8in/stringsutil v0.0.0-20220917064022-03a0bd835142
 	go.etcd.io/bbolt v1.3.7

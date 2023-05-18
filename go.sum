@@ -348,8 +348,8 @@ github.com/zan8in/goflags v0.0.0-20230204144650-0745934af58a h1:kgpEfiv4FDkAthNB
 github.com/zan8in/goflags v0.0.0-20230204144650-0745934af58a/go.mod h1:SU2BjeuADHecx3khPTkSgkYMvd89YFJnu8YhFDGRIdM=
 github.com/zan8in/gologger v0.0.0-20220917062627-c34a83c0a373 h1:T2YD/hp647jDauupyJqrwMdFSKkLbVeOylYA1ViNrg0=
 github.com/zan8in/gologger v0.0.0-20220917062627-c34a83c0a373/go.mod h1:z3Zn3+DLpcfFKNqhAdYECiFeFK+o1EW3Gh0DEhFZ+v4=
-github.com/zan8in/pavo v0.0.0-20230414054405-687df54c347c h1:dNZbk0m6guFOvde+lxApNaDtH0ARpp53X23dHZ6M23g=
-github.com/zan8in/pavo v0.0.0-20230414054405-687df54c347c/go.mod h1:K89VLh+uvrGNaHyGJ5qV8M3kG4UML0unkeC0xnd7Hgc=
+github.com/zan8in/pavo v0.0.0-20230518131659-d2204b6d9ea7 h1:t0g+czbqBUkIoyX7q72bZJSea36eVrzV5clpcjMRXew=
+github.com/zan8in/pavo v0.0.0-20230518131659-d2204b6d9ea7/go.mod h1:K89VLh+uvrGNaHyGJ5qV8M3kG4UML0unkeC0xnd7Hgc=
 github.com/zan8in/pins v0.0.0-20230415064757-40257618b466 h1:3FGXsUq3s+y8D4XJY8xwWHsBSxuDs9bOqaSUokZ2wW0=
 github.com/zan8in/pins v0.0.0-20230415064757-40257618b466/go.mod h1:hwq0CUJ14mXaWUCNaD2WXj7aKwUJfuOP0fIt9mpy6i0=
 github.com/zan8in/retryablehttp v0.0.0-20230317090519-47a043af521d h1:AmJZHaQ2xTb6dXSRdtdmrh5vWN4Sq01wD1liOY8cMdQ=
