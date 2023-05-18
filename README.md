@@ -23,6 +23,32 @@ The solution is as follows:
 
 To install libcap on Linux: `sudo apt install -y libpcap-dev`, on Mac: `sudo brew install libpcap`
 
+## Installation
+
+### Prerequisites
+
+- [Go](https://go.dev/) version 1.19 or higher.
+
+you can install it with:
+
+**Binary**
+```sh
+$ https://github.com/zan8in/aries/releases
+```
+
+**Github**
+```sh
+$ git clone https://github.com/zan8in/aries.git
+$ cd aries
+$ go build cmd/aries/main.go
+$ ./aries -h
+```
+
+**Go**
+```sh
+$ go install -v https://github.com/zan8in/aries/cmd/aries@latest
+```
+
 ## Example
 
 ```
